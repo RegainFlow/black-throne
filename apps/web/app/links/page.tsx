@@ -81,11 +81,12 @@ export default function LinksPage() {
                   href={s.url}
                   platform={s.platform}
                   location="links"
-                  className="group flex w-full items-center justify-between border border-bone/15 bg-void/80 px-5 py-4 transition-colors hover:border-accent"
+                  className="group flex w-full items-center justify-between gap-4 border border-bone/15 bg-void/80 px-5 py-4 transition-colors hover:border-accent"
                 >
-                  <span className="display-title text-base text-bone">{s.label}</span>
-                  <span className="mono-label transition-colors group-hover:text-accent">
-                    {s.handle} ↗
+                  <span className="display-title shrink-0 text-base text-bone">{s.label}</span>
+                  <span className="mono-label flex min-w-0 items-center gap-2 transition-colors group-hover:text-accent">
+                    <span className="truncate">{s.handle}</span>
+                    <span aria-hidden="true">↗</span>
                   </span>
                 </OutboundLink>
               </li>
