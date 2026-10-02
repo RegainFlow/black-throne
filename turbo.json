@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!e2e/**", "$TURBO_ROOT$/sealed.local.json"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["VERCEL", "VERCEL_ENV", "VERCEL_PROJECT_PRODUCTION_URL", "SEALED_TERMS"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "test": {
+      "outputs": []
+    }
+  }
+}

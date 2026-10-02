@@ -1,0 +1,26 @@
+{
+  "name": "black-throne",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@black-throne/web",
+    "build": "turbo run build",
+    "start": "pnpm --filter @black-throne/web start",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @black-throne/web test:e2e",
+    "media": "pnpm --filter @black-throne/media media",
+    "verify:sealed": "pnpm --filter @black-throne/web verify:sealed",
+    "verify:repo": "pnpm --filter @black-throne/web verify:repo"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "turbo": "^2"
+  }
+}

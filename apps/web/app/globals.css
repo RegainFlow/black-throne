@@ -1,0 +1,398 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   BLACK THRONE — design tokens
+   Grade colours live in CSS custom properties registered with @property so
+   they animate when <html data-grade> changes (see DESIGN.md → Colour).
+   Per-grade values are emitted by <GradeStyles/> from packages/content/src/grades.ts.
+------------------------------------------------------------------- */
+
+@property --bt-void {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #070505;
+}
+@property --bt-ash {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #16110e;
+}
+@property --bt-bone {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #d9d2c5;
+}
+@property --bt-smoke {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #8f887d;
+}
+@property --bt-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e0802a;
+}
+@property --bt-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ffb066;
+}
+@property --bt-fog {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #4a3a2e;
+}
+
+@theme inline {
+  --color-void: var(--bt-void);
+  --color-ash: var(--bt-ash);
+  --color-bone: var(--bt-bone);
+  --color-smoke: var(--bt-smoke);
+  --color-accent: var(--bt-accent);
+  --color-glow: var(--bt-glow);
+  --color-fog: var(--bt-fog);
+  --color-blood: #7a1414;
+
+  --font-display: var(--font-cinzel), "Trajan Pro", Georgia, serif;
+  --font-serif: var(--font-cormorant), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --ease-weight: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-sink: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --bt-gutter: clamp(1rem, 4vw, 3.5rem);
+  --bt-nav-h: 4.5rem;
+  --bt-grain: 0.5;
+  --bt-scanlines: 0;
+  color-scheme: dark;
+}
+
+/* Grade colours animate only once the page has settled (GradeController adds .grade-ready),
+   so the first grade applies instantly instead of re-styling the whole document for 1.8s. */
+:root.grade-ready {
+  transition:
+    --bt-void 1.8s var(--ease-weight),
+    --bt-ash 1.8s var(--ease-weight),
+    --bt-bone 1.8s var(--ease-weight),
+    --bt-smoke 1.8s var(--ease-weight),
+    --bt-accent 1.8s var(--ease-weight),
+    --bt-glow 1.8s var(--ease-weight),
+    --bt-fog 1.8s var(--ease-weight);
+}
+
+html {
+  background: var(--bt-void);
+  color: var(--bt-bone);
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  scrollbar-color: var(--bt-ash) var(--bt-void);
+}
+
+body {
+  background: transparent;
+  font-family: var(--font-mono);
+  min-height: 100svh;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--bt-accent);
+  color: var(--bt-void);
+}
+
+:focus-visible {
+  outline: 1px solid var(--bt-accent);
+  outline-offset: 4px;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+/* ------------------------------------------------------------------
+   Typography primitives
+------------------------------------------------------------------- */
+
+@utility type-wordmark {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: lowercase;
+  color: var(--bt-smoke);
+}
+
+@utility display-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+@utility hairline {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--bt-bone) 35%, transparent),
+    transparent
+  );
+}
+
+@utility px-gutter {
+  padding-inline: var(--bt-gutter);
+}
+
+/* ------------------------------------------------------------------
+   Threshold gating (set before first paint by the inline head script)
+------------------------------------------------------------------- */
+
+[data-threshold-root] {
+  display: none;
+}
+html[data-threshold] [data-threshold-root] {
+  display: flex;
+}
+html[data-threshold] body {
+  overflow: hidden;
+}
+
+@layer components {
+  /* ------------------------------------------------------------------
+     Texture layers
+  ------------------------------------------------------------------- */
+
+  .bt-grain {
+    position: fixed;
+    inset: -50%;
+    z-index: 60;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: calc(0.025 + var(--bt-grain) * 0.04);
+    will-change: transform;
+    animation: bt-grain 0.9s steps(6) infinite;
+  }
+
+  @keyframes bt-grain {
+    0% {
+      transform: translate(0, 0);
+    }
+    20% {
+      transform: translate(-6%, 4%);
+    }
+    40% {
+      transform: translate(5%, -7%);
+    }
+    60% {
+      transform: translate(-3%, 8%);
+    }
+    80% {
+      transform: translate(7%, 2%);
+    }
+    100% {
+      transform: translate(-4%, -5%);
+    }
+  }
+
+  .bt-vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 85% at 50% 45%, transparent 55%, rgb(0 0 0 / 0.75) 100%),
+      linear-gradient(180deg, rgb(0 0 0 / 0.35), transparent 18%, transparent 82%, rgb(0 0 0 / 0.5));
+  }
+
+  .bt-scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 58;
+    pointer-events: none;
+    opacity: calc(var(--bt-scanlines) * 0.22);
+    transition: opacity 1.6s var(--ease-weight);
+    background: repeating-linear-gradient(180deg, rgb(0 0 0 / 0.55) 0 1px, transparent 1px 3px);
+  }
+
+  /* Static fallback world (no WebGL / reduced data / before the canvas fades in). */
+  .bt-world-fallback {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        60% 45% at 50% 0%,
+        color-mix(in oklab, var(--bt-glow) 16%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        90% 60% at 50% 110%,
+        color-mix(in oklab, var(--bt-fog) 70%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        70% 50% at 15% 60%,
+        color-mix(in oklab, var(--bt-fog) 35%, transparent),
+        transparent 70%
+      ),
+      var(--bt-void);
+  }
+
+  /* CSS-only drifting smoke for /links and fallbacks. */
+  .bt-smoke-css {
+    position: fixed;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        40% 30% at 30% 70%,
+        color-mix(in oklab, var(--bt-fog) 55%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        35% 25% at 70% 80%,
+        color-mix(in oklab, var(--bt-fog) 45%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        30% 20% at 55% 20%,
+        color-mix(in oklab, var(--bt-glow) 12%, transparent),
+        transparent 70%
+      );
+    filter: blur(30px);
+    will-change: transform;
+    animation: bt-drift 28s ease-in-out infinite alternate;
+  }
+
+  @keyframes bt-drift {
+    from {
+      transform: translate3d(-3%, 2%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(4%, -3%, 0) scale(1.12);
+    }
+  }
+
+  /* Monogram as a tintable mask (PNG alpha or SVG). */
+  .bt-monogram {
+    display: inline-block;
+    /* src + intrinsic aspect come from the media manifest (root layout) */
+    aspect-ratio: var(--bt-monogram-aspect, 697 / 900);
+    background: currentColor;
+    -webkit-mask: var(--bt-monogram-src) center / contain no-repeat;
+    mask: var(--bt-monogram-src) center / contain no-repeat;
+  }
+
+  /* ------------------------------------------------------------------
+     Glitch (wordmark) — layered clones, driven by data-glitch
+  ------------------------------------------------------------------- */
+
+  .bt-glitch {
+    position: relative;
+    display: inline-block;
+  }
+  .bt-glitch__layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .bt-glitch[data-glitching="true"] .bt-glitch__layer {
+    opacity: 0.85;
+  }
+  .bt-glitch[data-glitching="true"] .bt-glitch__layer--a {
+    color: var(--bt-accent);
+    transform: translate3d(-0.04em, 0, 0);
+    clip-path: inset(var(--g-a-top, 20%) 0 var(--g-a-bot, 55%) 0);
+    mix-blend-mode: screen;
+  }
+  .bt-glitch[data-glitching="true"] .bt-glitch__layer--b {
+    color: #5fd4ff;
+    transform: translate3d(0.05em, 0, 0);
+    clip-path: inset(var(--g-b-top, 60%) 0 var(--g-b-bot, 12%) 0);
+    mix-blend-mode: screen;
+  }
+  .bt-glitch[data-glitching="true"] .bt-glitch__base {
+    clip-path: inset(0 0 0 0);
+    transform: translate3d(var(--g-shift, 0), 0, 0);
+  }
+
+  /* ------------------------------------------------------------------
+     Cursor
+  ------------------------------------------------------------------- */
+
+  @media (hover: hover) and (pointer: fine) {
+    html.has-cursor,
+    html.has-cursor a,
+    html.has-cursor button {
+      cursor: none;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------
+   Reduced motion: everything settles.
+------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bt-grain {
+    animation: none;
+  }
+}
+
+@keyframes bt-descend {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(350%);
+  }
+}
+
+/* Two stutters, then hold — stays under three flashes per second. */
+@keyframes bt-flicker {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.15;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}

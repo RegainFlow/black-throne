@@ -1,0 +1,120 @@
+"use client";
+
+import type { SealedSlot as Slot } from "@black-throne/content/types";
+import { useMemo, useRef, useState } from "react";
+import { Monogram } from "@/components/ui/Monogram";
+import { trackEvent } from "@/lib/analytics";
+import { audio } from "@/lib/audio-engine";
+import { world } from "@/lib/world-store";
+
+/** Deterministic PRNG seeded from the slot id (never from any real title). */
+function seeded(id: string) {
+  let h = 2166136261;
+  for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
+function cracks(id: string): string[] {
+  const rand = seeded(id);
+  const cx = 30 + rand() * 40;
+  const cy = 35 + rand() * 30;
+  return Array.from({ length: 7 }, () => {
+    const angle = rand() * Math.PI * 2;
+    let x = cx;
+    let y = cy;
+    const pts = [`${x.toFixed(1)},${y.toFixed(1)}`];
+    for (let i = 0; i < 5; i++) {
+      const a = angle + (rand() - 0.5) * 0.9;
+      const len = 6 + rand() * 14;
+      x += Math.cos(a) * len;
+      y += Math.sin(a) * len * 1.7;
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    return pts.join(" ");
+  });
+}
+
+/** Something that exists but is not yet revealed. Touch it and the world pushes back. */
+export function SealedSlot({ slot, className }: { slot: Slot; className?: string }) {
+  const [disturbed, setDisturbed] = useState(false);
+  const lines = useMemo(() => cracks(slot.id), [slot.id]);
+  const timer = useRef(0);
+
+  const disturb = () => {
+    window.clearTimeout(timer.current);
+    if (!disturbed) {
+      world.getState().burst();
+      audio.rumble();
+      trackEvent("sealed_touch", { slot: slot.id });
+    }
+    setDisturbed(true);
+    timer.current = window.setTimeout(() => setDisturbed(false), 1600);
+  };
+
+  return (
+    <button
+      type="button"
+      data-cursor
+      onPointerEnter={disturb}
+      onFocus={disturb}
+      onClick={disturb}
+      data-disturbed={disturbed}
+      className={`group relative isolate block aspect-[9/16] w-full overflow-hidden border border-bone/10 bg-void/50 text-left ${className ?? ""}`}
+    >
+      {/* trapped smoke */}
+      <span aria-hidden="true" className="absolute -inset-1/4 -z-10">
+        <span className="absolute inset-0 animate-[bt-drift_14s_ease-in-out_infinite_alternate] bg-[radial-gradient(40%_30%_at_40%_70%,color-mix(in_oklab,var(--bt-fog)_80%,transparent),transparent_70%)] blur-2xl" />
+        <span className="absolute inset-0 animate-[bt-drift_19s_ease-in-out_infinite_alternate-reverse] bg-[radial-gradient(35%_25%_at_60%_35%,color-mix(in_oklab,var(--bt-glow)_14%,transparent),transparent_70%)] blur-2xl" />
+      </span>
+
+      {/* cracked glass */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="absolute inset-0 h-full w-full text-bone/20 transition-colors duration-500 group-data-[disturbed=true]:text-accent/60"
+      >
+        {lines.map((points) => (
+          <polyline
+            key={points}
+            points={points}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.25"
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </svg>
+
+      {/* static when disturbed */}
+      <span
+        aria-hidden="true"
+        className="bt-grain !absolute !inset-0 !z-0 opacity-0 !mix-blend-normal transition-opacity duration-150 group-data-[disturbed=true]:!opacity-40"
+      />
+
+      <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+        <Monogram className="h-1/3 text-bone/10 transition-all duration-700 group-data-[disturbed=true]:scale-110 group-data-[disturbed=true]:text-bone/5 group-data-[disturbed=true]:blur-[2px]" />
+      </span>
+
+      <span
+        aria-hidden="true"
+        className="display-title absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-lg text-bone opacity-0 transition-opacity duration-200 group-data-[disturbed=true]:animate-[bt-flicker_0.9s_steps(1)_1] group-data-[disturbed=true]:opacity-100"
+      >
+        not yet.
+      </span>
+
+      <span className="mono-label absolute inset-x-3 bottom-3 flex items-center justify-between">
+        <span>
+          {slot.label}
+          <span className="sr-only"> — not yet revealed</span>
+        </span>
+        {slot.hint && <span className="text-bone/40">{slot.hint}</span>}
+      </span>
+    </button>
+  );
+}

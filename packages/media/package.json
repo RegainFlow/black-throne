@@ -1,0 +1,23 @@
+{
+  "name": "@black-throne/media",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "media": "tsx src/run.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@black-throne/content": "workspace:*",
+    "ffmpeg-static": "^5",
+    "sharp": "^0.34"
+  },
+  "devDependencies": {
+    "@black-throne/typescript-config": "workspace:*",
+    "@types/node": "^24",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^4"
+  }
+}
