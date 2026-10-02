@@ -8,7 +8,7 @@ import { FragmentButton } from "./FragmentButton";
 
 interface Props {
   release: Pick<PublicRelease, "slug" | "visibility" | "releaseDate" | "spotify" | "presaveUrl"> & {
-    /** Teaser fragment URL; shows "hear a fragment" before release. */
+    /** Teaser fragment URL; shows "hear a fragment" until the track is on Spotify. */
     teaserSrc?: string;
   };
   artistUrl: string;
@@ -57,7 +57,10 @@ export function ReleaseCtas({ release, artistUrl, location, align = "center" }: 
           follow on spotify
         </CtaLink>
       )}
-      {release.teaserSrc && !out && <FragmentButton location={location} src={release.teaserSrc} />}
+      {/* The fragment stays until the full track is playable on Spotify. */}
+      {release.teaserSrc && !(out && release.spotify) && (
+        <FragmentButton location={location} src={release.teaserSrc} />
+      )}
     </div>
   );
 }

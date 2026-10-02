@@ -117,6 +117,8 @@ export function findPlaceholders(input: { site: Site; releases: Release[] }): st
   for (const r of input.releases) {
     if (r.visibility === "announced" && !r.releaseDate) out.push(`${r.title}: no releaseDate yet`);
     if (r.visibility === "announced" && !r.presaveUrl) out.push(`${r.title}: no presaveUrl yet`);
+    if (r.visibility === "released" && !r.spotify)
+      out.push(`${r.title}: out, but no Spotify link yet`);
   }
   return out;
 }

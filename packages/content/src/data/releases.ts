@@ -43,8 +43,16 @@ export const releases: Release[] = [
     eraId: "ii",
     kind: "single",
     title: "HOUSE OF ASH",
-    visibility: "announced",
-    // Fill in when known: announceDate, releaseDate (YYYY-MM-DD), presaveUrl, spotify.
+    visibility: "released",
+    releaseDate: "2026-10-02",
+    spotify: {
+      uri: "spotify:album:7b1l5pwD1JqPKaRRGpWmc2",
+      url: "https://open.spotify.com/album/7b1l5pwD1JqPKaRRGpWmc2",
+    },
+    tracks: [
+      { title: "House of Ash", uri: "spotify:track:1oFvoXElizQ1JPDUl5fl9D", durationMs: 278040 },
+    ],
+    // Still plays on "enter with sound" in the threshold, where the world reacts to it.
     teaser: { start: "auto", duration: 30 },
     grade: "house-of-ash",
     position: 1,
