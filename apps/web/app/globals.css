@@ -242,7 +242,7 @@ html[data-threshold] body {
     background:
       radial-gradient(
         60% 45% at 50% 0%,
-        color-mix(in oklab, var(--bt-glow) 16%, transparent),
+        color-mix(in oklab, var(--bt-glow) 9%, transparent),
         transparent 70%
       ),
       radial-gradient(

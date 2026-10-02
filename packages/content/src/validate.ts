@@ -70,6 +70,12 @@ const slotSchema = z.object({
   position: z.number().int().positive(),
   label: z.string().min(1),
   hint: z.string().optional(),
+  veil: z
+    .object({
+      at: z.number().nonnegative().optional(),
+      keep: z.number().min(0.3).max(1).optional(),
+    })
+    .optional(),
 });
 
 /** Throws a readable error if the content is inconsistent. Run in tests and by `pnpm media`. */

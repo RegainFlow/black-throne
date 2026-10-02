@@ -135,7 +135,8 @@ export default function WorldCanvas() {
         depthTest: false,
         depthWrite: false,
       });
-      particleProgram.setBlendFunc(gl.ONE, gl.ONE);
+      // Premultiplied "over" blending: ash drifts as soft motes instead of additive glitter.
+      particleProgram.setBlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       const particles = new Mesh(gl, {
         mode: gl.POINTS,
         geometry: new Geometry(gl, {

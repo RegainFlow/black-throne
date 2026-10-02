@@ -4,10 +4,19 @@ import { CtaLink } from "@/components/ui/Cta";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function Listen({ releases, site }: { releases: PublicRelease[]; site: Site }) {
+  // Newest first: the latest release is always the first choice, older chapters follow.
   const playable: Playable[] = releases
     .filter((r) => r.spotify)
-    .reverse()
-    .map((r) => ({ slug: r.slug, title: r.title, uri: r.spotify?.uri ?? "", tracks: r.tracks }));
+    .sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? ""))
+    .map((r) => ({
+      slug: r.slug,
+      title: r.title,
+      uri: r.spotify?.uri ?? "",
+      tracks: r.tracks,
+      kind: r.kind,
+      year: r.releaseDate?.slice(0, 4),
+      thumb: r.media.cover?.webp.split(", ")[0]?.split(" ")[0],
+    }));
 
   return (
     <section id="listen" aria-labelledby="listen-title" className="relative px-gutter py-[14vh]">

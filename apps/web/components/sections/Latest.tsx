@@ -21,7 +21,10 @@ export function Latest({ release, site }: { release: PublicRelease; site: Site }
       <div className="mx-auto grid max-w-7xl items-center gap-14 md:grid-cols-12 md:gap-10">
         <div className="md:col-span-5 md:col-start-1">
           {cover && (
-            <BurnReveal grade={release.grade} className="mx-auto max-w-sm md:max-w-none">
+            <BurnReveal
+              grade={release.grade}
+              className="mx-auto w-full max-w-[15rem] sm:max-w-[17rem] md:max-w-[20rem]"
+            >
               <TransitionLink
                 href={`/chapters/${release.slug}`}
                 aria-label={`${release.title} — open chapter`}
@@ -29,7 +32,7 @@ export function Latest({ release, site }: { release: PublicRelease; site: Site }
                 <CoverPicture
                   cover={cover}
                   alt={`${release.title} cover art`}
-                  sizes="(min-width: 768px) 40vw, 90vw"
+                  sizes="(min-width: 768px) 320px, 272px"
                   className="h-auto w-full shadow-[0_40px_120px_-20px_rgb(0_0_0/0.9)]"
                 />
               </TransitionLink>

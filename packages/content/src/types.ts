@@ -92,6 +92,23 @@ export interface SealedSlot {
   position: number;
   label: string;
   hint?: string;
+  /**
+   * Optional tease chosen by the artist: a heavily blurred still from `assets/sealed/<id>.*`
+   * (an image, or a video frame at `at` seconds). Only the top `keep` fraction is used (default
+   * 0.78, which drops a cover title band; use less to crop above video captions), and the blur
+   * makes anything left illegible. Source files use the neutral slot id, never the real title.
+   */
+  veil?: { at?: number; keep?: number };
+}
+
+export interface VeilMedia {
+  src: string;
+  width: number;
+  height: number;
+}
+
+export interface PublicSlot extends SealedSlot {
+  veilMedia?: VeilMedia;
 }
 
 export interface SocialLink {
@@ -159,6 +176,8 @@ export interface MediaManifest {
   /** Tintable mark (alpha mask) and its intrinsic size, for aspect-ratio. */
   brand?: { monogram?: string; width?: number; height?: number };
   releases: Record<string, ReleaseMedia>;
+  /** Blurred teaser stills for veiled sealed slots, keyed by slot id. */
+  veils?: Record<string, VeilMedia>;
 }
 
 /* ---------- public, serialisable shapes handed to client components ---------- */
@@ -169,7 +188,7 @@ export interface PublicRelease extends Release {
 
 export type ChapterItem =
   | { type: "release"; release: PublicRelease }
-  | { type: "sealed"; slot: SealedSlot };
+  | { type: "sealed"; slot: PublicSlot };
 
 export interface Chapter {
   era: Era;

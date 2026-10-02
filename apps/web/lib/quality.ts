@@ -17,7 +17,7 @@ export function detectQuality(): Quality {
 }
 
 export const QUALITY = {
-  high: { dpr: 1, particles: 1400, fps: 60, octaves: 5 },
-  mid: { dpr: 0.75, particles: 800, fps: 60, octaves: 4 },
-  low: { dpr: 0.55, particles: 360, fps: 30, octaves: 3 },
+  high: { dpr: 1, particles: 650, fps: 60, octaves: 5 },
+  mid: { dpr: 0.75, particles: 420, fps: 60, octaves: 4 },
+  low: { dpr: 0.55, particles: 220, fps: 30, octaves: 3 },
 } as const;

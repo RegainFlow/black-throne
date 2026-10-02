@@ -17,6 +17,7 @@ import type {
   Release,
   ReleaseMedia,
   TeaserMedia,
+  VeilMedia,
   VideoMedia,
 } from "@black-throne/content/types";
 import { findPlaceholders, validateContent } from "@black-throne/content/validate";
@@ -386,6 +387,60 @@ async function processBrand(): Promise<MediaManifest["brand"]> {
   return { monogram: "/brand/monogram.png", width: info.width, height: info.height };
 }
 
+/* ---------------- veils (blurred teasers for sealed slots) ---------------- */
+
+/**
+ * A veiled slot gets a still so blurred that only light and silhouette survive: the bottom
+ * title band is cropped away, the frame is shrunk to ~32px and smeared back up. Sources live
+ * in assets/sealed/<slot-id>.* so no real title appears in code or filenames.
+ */
+async function processVeils(): Promise<Record<string, VeilMedia>> {
+  const outDir = join(PUBLIC_MEDIA, "sealed");
+  await rm(outDir, { recursive: true, force: true });
+  const veiled = slots.filter((s) => s.veil);
+  if (!veiled.length) return {};
+  await mkdir(outDir, { recursive: true });
+  const out: Record<string, VeilMedia> = {};
+  for (const slot of veiled) {
+    const dir = join(ASSETS, "sealed");
+    const image = findFile(dir, slot.id, ["png", "jpg", "jpeg", "webp"]);
+    const video = findFile(dir, slot.id, ["mp4", "mov", "webm"]);
+    let still: Buffer | undefined;
+    if (image) still = await readFile(image);
+    else if (video) {
+      const frame = join(outDir, `${slot.id}.frame.png`);
+      await ffmpeg(["-ss", String(slot.veil?.at ?? 1), "-i", video, "-frames:v", "1", frame]);
+      still = await readFile(frame);
+      await rm(frame, { force: true });
+    }
+    if (!still) {
+      log(`! veil for ${slot.id}: no assets/sealed/${slot.id}.* — slot renders without an image`);
+      continue;
+    }
+    const meta = await sharp(still).metadata();
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+    const kept = Math.round(h * (slot.veil?.keep ?? 0.78)); // drop title bands / captions
+    const width = 360;
+    const height = Math.round((width * kept) / w);
+    const tiny = await sharp(still)
+      .extract({ left: 0, top: 0, width: w, height: kept })
+      .resize({ width: 32 })
+      .toBuffer();
+    await sharp(tiny)
+      .resize({ width, height, kernel: "cubic" })
+      .blur(6)
+      .modulate({ brightness: 0.8, saturation: 0.85 })
+      .webp({ quality: 60 })
+      .toFile(join(outDir, `${slot.id}.webp`));
+    out[slot.id] = { src: `/media/sealed/${slot.id}.webp`, width, height };
+    log(
+      `veil ${slot.id}: ${image ? "image" : `video frame @${slot.veil?.at ?? 1}s`} → ${width}×${height} (blurred)`,
+    );
+  }
+  return out;
+}
+
 /* ---------------- main ---------------- */
 
 async function main() {
@@ -393,7 +448,7 @@ async function main() {
   console.log("black throne · media");
 
   await mkdir(PUBLIC_MEDIA, { recursive: true });
-  const keep = new Set(releases.map((r) => r.slug));
+  const keep = new Set([...releases.map((r) => r.slug), "sealed"]);
   for (const entry of await readdir(PUBLIC_MEDIA, { withFileTypes: true })) {
     if (!keep.has(entry.name)) {
       await rm(join(PUBLIC_MEDIA, entry.name), { recursive: true, force: true });
@@ -403,6 +458,8 @@ async function main() {
 
   const manifest: MediaManifest = { releases: {} };
   manifest.brand = await processBrand();
+  console.log("\nveils");
+  manifest.veils = await processVeils();
 
   for (const release of releases) {
     console.log(`\n${release.slug}`);

@@ -8,6 +8,7 @@ import type {
   EraId,
   MediaManifest,
   PublicRelease,
+  PublicSlot,
   SealedSlot,
   Site,
 } from "./types";
@@ -56,8 +57,13 @@ export function getLatest(): PublicRelease {
   return withMedia(pick.slug);
 }
 
-export function getSlots(kind?: SealedSlot["kind"]): SealedSlot[] {
-  return kind ? slots.filter((s) => s.kind === kind) : slots;
+function withVeil(slot: SealedSlot): PublicSlot {
+  const veilMedia = slot.veil ? media.veils?.[slot.id] : undefined;
+  return veilMedia ? { ...slot, veilMedia } : slot;
+}
+
+export function getSlots(kind?: SealedSlot["kind"]): PublicSlot[] {
+  return (kind ? slots.filter((s) => s.kind === kind) : slots).map(withVeil);
 }
 
 /** Eras in order, each with its public releases and sealed slots interleaved by position. */
@@ -73,7 +79,7 @@ export function getChapters(): Chapter[] {
         })),
       ...slots
         .filter((s) => s.eraId === era.id && s.kind !== "transmission")
-        .map((s) => ({ type: "sealed" as const, slot: s, position: s.position })),
+        .map((s) => ({ type: "sealed" as const, slot: withVeil(s), position: s.position })),
     ]
       .sort((a, b) => a.position - b.position)
       .map(({ position: _position, ...item }) => item as ChapterItem);

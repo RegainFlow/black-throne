@@ -67,7 +67,12 @@ export default async function ChapterPage({ params }: PageProps<"/chapters/[slug
             {cover && (
               <BurnReveal
                 grade={release.grade}
-                className="mx-auto max-w-sm border border-bone/10 md:max-w-none"
+                className={`mx-auto w-full border border-bone/10 ${
+                  // Portrait posters stay poster-sized; square album art can fill the column.
+                  cover.height > cover.width
+                    ? "max-w-[15rem] sm:max-w-[17rem] md:max-w-[20rem]"
+                    : "max-w-sm md:max-w-none"
+                }`}
               >
                 <CoverPicture
                   cover={cover}

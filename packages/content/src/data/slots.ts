@@ -5,8 +5,17 @@ import type { SealedSlot } from "../types";
  * never be derived from the real titles (no lengths, initials or anagrams).
  */
 export const slots: SealedSlot[] = [
-  { id: "ii-2", eraId: "ii", kind: "single", position: 2, label: "II · SEALED" },
+  // Veiled: the artist chose to tease this one with a blurred still (assets/sealed/ii-2.*).
+  { id: "ii-2", eraId: "ii", kind: "single", position: 2, label: "TBA", veil: {} },
   { id: "ii-3", eraId: "ii", kind: "single", position: 3, label: "II · SEALED" },
   { id: "ii-0", eraId: "ii", kind: "album", position: 4, label: "II", hint: "not yet." },
-  { id: "visions-1", eraId: "ii", kind: "transmission", position: 1, label: "TRANSMISSION" },
+  // Upcoming video, teased in Visions as a blurred frame (assets/sealed/visions-1.*).
+  {
+    id: "visions-1",
+    eraId: "ii",
+    kind: "transmission",
+    position: 1,
+    label: "TBD",
+    veil: { at: 8, keep: 0.6 },
+  },
 ];

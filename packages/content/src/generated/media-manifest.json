@@ -205,5 +205,17 @@
     "monogram": "/brand/monogram.png",
     "width": 697,
     "height": 900
+  },
+  "veils": {
+    "ii-2": {
+      "src": "/media/sealed/ii-2.webp",
+      "width": 360,
+      "height": 421
+    },
+    "visions-1": {
+      "src": "/media/sealed/visions-1.webp",
+      "width": 360,
+      "height": 384
+    }
   }
 }
