@@ -10,7 +10,7 @@ export function ReleaseCard({ release, sizes }: { release: PublicRelease; sizes:
   const year = release.releaseDate ? parseReleaseDate(release.releaseDate).getFullYear() : null;
   const meta = [
     release.kind,
-    release.tracks ? `${release.tracks.length} tracks` : null,
+    release.tracks && release.tracks.length > 1 ? `${release.tracks.length} tracks` : null,
     year,
     release.visibility === "announced" ? "announced" : null,
   ].filter(Boolean);

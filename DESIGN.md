@@ -153,6 +153,7 @@ Unannounced releases **do not exist** in this codebase until reveal day.
 
 - Before a reveal, a release is only an author-written `SealedSlot` (`label`, optional `hint`). It is never derived from the real title: no lengths, no initials, no anagrams, no palette.
 - Art and audio for upcoming releases live only in gitignored `/assets`. `pnpm media` processes only public releases.
+- **Exception: veils.** When the artist chooses to tease, a slot may show a heavily blurred still under the cracked glass, labelled "TBA"/"TBD". The title band and captions are cropped off before blurring, so only light and silhouette survive.
 - `verify-sealed` fails the build if any denylisted term appears in `.next/` or `public/`. `pnpm verify:repo` does the same for every committable file.
 
 ---

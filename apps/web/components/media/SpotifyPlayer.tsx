@@ -74,7 +74,7 @@ export function SpotifyPlayer({ items }: { items: Playable[] }) {
           <div
             role="tablist"
             aria-label="Choose a release"
-            className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-1 sm:gap-4"
+            className="-mx-1 flex flex-col gap-3 px-1 pb-1 sm:snap-x sm:flex-row sm:gap-4 sm:overflow-x-auto"
           >
             {items.map((item, i) => {
               const selected = i === active;
@@ -92,7 +92,7 @@ export function SpotifyPlayer({ items }: { items: Playable[] }) {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => select(i)}
                   onKeyDown={(e) => onKeyDown(e, i)}
-                  className={`group relative flex min-w-[15rem] shrink-0 snap-start items-center gap-4 border p-3 pr-5 text-left transition-colors duration-500 sm:min-w-[17rem] ${
+                  className={`group relative flex w-full shrink-0 snap-start items-center gap-4 border p-3 pr-5 text-left transition-colors duration-500 sm:w-auto sm:min-w-[17rem] ${
                     selected
                       ? "border-accent bg-accent/[0.07]"
                       : "border-bone/15 bg-void/50 hover:border-bone/50 hover:bg-bone/[0.04]"

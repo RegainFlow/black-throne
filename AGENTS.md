@@ -83,7 +83,8 @@ All content is typed data in `packages/content/src/data/`. It is validated on im
 - **Links / copy:** `site.ts`. Socials marked `placeholder: true` are hidden on the site and make production builds print a warning until they are replaced.
 - **Eras (chapters):** `eras.ts`. `title: null` renders a redaction bar.
 - **Releases:** `releases.ts`. Only announced or released items. Fields: dates (`YYYY-MM-DD` = local midnight), `spotify`, `presaveUrl`, `tracks`, `teaser`, `videos`, `grade`, `position`.
-- **Sealed slots:** `slots.ts`. Cryptic placeholders. `kind: "transmission"` appears in Visions while there are no videos.
+- **Sealed slots:** `slots.ts`. Cryptic placeholders. Slots with `kind: "transmission"` are upcoming videos, shown first in Visions.
+- **Veiled slots (an artist-approved tease):** add `veil: {}` (or `veil: { at, keep }` for a video frame) to a slot, and put the source in gitignored `assets/sealed/<slot-id>.*`. `pnpm media` keeps only the top `keep` of the frame (dropping title bands and captions), shrinks it to ~32px and blurs it into `public/media/sealed/<slot-id>.webp`. **Always look at the output.** No text may be legible, and the filename is the neutral slot id. On reveal day, delete the slot and its `assets/sealed/` source.
 
 ### Reveal playbook (announce day)
 

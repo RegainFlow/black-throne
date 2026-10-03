@@ -111,6 +111,24 @@ test.describe("content", () => {
   });
 });
 
+test.describe("listen", () => {
+  test("release switcher is newest-first and switchable by click and keyboard", async ({
+    page,
+  }) => {
+    // Returning visitor: the entry ritual has already been passed this session.
+    await page.addInitScript(() => sessionStorage.setItem("bt:entered", "1"));
+    await page.goto("/#listen");
+    const tabs = page.getByRole("tablist", { name: /choose a release/i }).getByRole("tab");
+    expect(await tabs.count()).toBeGreaterThan(1);
+    await expect(tabs.first()).toContainText(/house of ash/i);
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+    await tabs.nth(1).click();
+    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("ArrowLeft");
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  });
+});
+
 test.describe("quality", () => {
   for (const path of PAGES) {
     test(`${path} has no horizontal overflow and no first-party errors`, async ({ browser }) => {
