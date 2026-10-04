@@ -14,7 +14,17 @@ function sealedSlugs(): string[] {
     .filter((t) => /^[a-z0-9]+(-[a-z0-9]+)+$/.test(t));
 }
 
-const PAGES = ["/", "/links", "/chapters/dystopia", "/chapters/house-of-ash"];
+const PAGES = [
+  "/",
+  "/links",
+  "/chapters/dystopia",
+  "/chapters/house-of-ash",
+  // merch (served from the Fourthwall mock, see playwright.config.ts)
+  "/merch",
+  "/merch/crest-tee",
+  "/merch/tee-and-poster-pack",
+  "/merch/cart",
+];
 
 test.describe("first paint", () => {
   test("wordmark is visible without JavaScript and no threshold blocks it", async ({ browser }) => {
@@ -53,6 +63,14 @@ test.describe("first paint", () => {
     await page.goto("/links");
     await expect(page.locator("html")).not.toHaveAttribute("data-threshold", /.*/);
   });
+
+  test("the merch pages skip the threshold and can scroll", async ({ page }) => {
+    for (const path of ["/merch", "/merch/crest-tee"]) {
+      await page.goto(path);
+      await expect(page.locator("html")).not.toHaveAttribute("data-threshold", /.*/);
+      await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+    }
+  });
 });
 
 test.describe("routes", () => {
@@ -89,6 +107,13 @@ test.describe("content", () => {
     );
     await expect(page.locator('a[href="https://www.youtube.com/"]')).toHaveCount(0);
     await expect(page.getByRole("link", { name: /enter the world/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^merch/i })).toHaveAttribute("href", "/merch");
+  });
+
+  test("merch is in the sitemap; product pages are not", async ({ request }) => {
+    const sitemap = await (await request.get("/sitemap.xml")).text();
+    expect(sitemap).toMatch(/\/merch<\/loc>/);
+    expect(sitemap).not.toContain("/merch/");
   });
 
   test("home carries MusicGroup JSON-LD and a share image", async ({ page }) => {

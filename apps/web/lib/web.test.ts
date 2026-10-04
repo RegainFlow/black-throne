@@ -25,6 +25,7 @@ const site: Site = {
       placeholder: true,
     },
   ],
+  merch: { enabled: true },
 };
 
 const album: PublicRelease = {

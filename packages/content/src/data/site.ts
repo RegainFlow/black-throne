@@ -38,4 +38,5 @@ export const site: Site = {
       placeholder: true,
     },
   ],
+  merch: { enabled: true },
 };

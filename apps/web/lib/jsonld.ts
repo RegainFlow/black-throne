@@ -1,4 +1,5 @@
 import type { PublicRelease, Site } from "@black-throne/content/types";
+import type { MerchItem } from "./merch/types";
 
 const isoDuration = (ms: number) => {
   const s = Math.round(ms / 1000);
@@ -57,6 +58,27 @@ export function releaseLd(release: PublicRelease, site: Site, origin: URL) {
     image,
     byArtist,
     datePublished: release.releaseDate,
+  };
+}
+
+/** A merch product page. Price and availability mirror what the page shows (USD). */
+export function productLd(item: MerchItem, site: Site, origin: URL) {
+  const url = new URL(`/merch/${item.slug}`, origin).href;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: item.name,
+    url,
+    image: item.images.slice(0, 4).map((i) => i.original),
+    description: item.text.slice(0, 500) || undefined,
+    brand: { "@type": "Brand", name: site.name },
+    offers: {
+      "@type": "Offer",
+      url,
+      price: item.price.value.toFixed(2),
+      priceCurrency: item.price.currency,
+      availability: item.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    },
   };
 }
 

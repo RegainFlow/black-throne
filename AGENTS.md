@@ -4,7 +4,9 @@ Guide for coding agents and contributors. Read this first. For the visual langua
 
 ## What this is
 
-A **promotional** website for the metal artist **Black Throne**. It is a cinematic, dark "world" where each album is a chapter. It drives people to Spotify, YouTube, Instagram and TikTok. It sells nothing.
+A **promotional** website for the metal artist **Black Throne**. It is a cinematic, dark "world" where each album is a chapter. It drives people to Spotify, YouTube, Instagram and TikTok.
+
+The site stays **promotion-first**. Merch is a separate, secondary, lean experience at `/merch`. Products come from Fourthwall's Storefront API, and **Fourthwall owns checkout, payment, tax, fulfilment and shipping** through its hosted checkout. The site never collects payment or address details, and it never uses or exposes administrative shop credentials. Only the read-only Storefront token is used, server-side.
 
 Releases are revealed in stages. **Unannounced material must never reach a build, a deploy or git.** That rule beats every other consideration here. See [Guardrails](#guardrails).
 
@@ -21,6 +23,7 @@ Releases are revealed in stages. **Unannounced material must never reach a build
 | State | `zustand/vanilla` world store (read in rAF loops, not React) |
 | Audio | Web Audio API (`apps/web/lib/audio-engine.ts`) |
 | Music | Spotify **iFrame API embed only**. No Web API: client-credentials metadata endpoints were removed from dev mode in Feb 2026. |
+| Merch | Fourthwall **Storefront API** (catalogue + Cart API, server-side only) and Fourthwall's hosted checkout. No Open API/Basic Auth, no webhooks. |
 | Analytics | `@vercel/analytics` (custom `outbound` events need Vercel Pro), `@vercel/speed-insights` |
 | Quality | Biome (lint + format), Vitest, Playwright |
 
@@ -37,7 +40,7 @@ Releases are revealed in stages. **Unannounced material must never reach a build
 | `pnpm lint` / `pnpm format` | Biome check / write |
 | `pnpm typecheck` | `next typegen && tsc` (web) + `tsc` (packages) |
 | `pnpm test` | Vitest across packages |
-| `pnpm test:e2e` | Playwright against `next start` (run `pnpm build` first) |
+| `pnpm test:e2e` | Playwright against `next start` + a Fourthwall mock (run `pnpm build` first) |
 | `pnpm media` | process `/assets` → `apps/web/public/media` + manifest |
 | `pnpm verify:sealed` | scan `.next/` + `public/` for upcoming titles |
 | `pnpm verify:repo` | scan every committable file for upcoming titles: **run before committing** |
@@ -63,6 +66,8 @@ apps/web/
   app/layout.tsx            lean root: fonts, grade tokens, pre-paint threshold script — no client world
   app/(world)/              the cinematic group: layout mounts WorldShell + Threshold; / and /chapters/[slug]
   app/links, app/not-found  lean pages (StaticBackdrop, plain next/link) — no WebGL/GSAP/Lenis
+  app/merch/                lean merch store: listing (+search/filters), [slug], cart, Server Actions
+  proxy.ts                  /merch only: keeps allowlisted utm_*/gclid/fbclid for checkout
   app/                      also: OG images · sitemap · robots · manifest
   components/world/         persistent layer: WorldCanvas, GradeController, Hud, Cursor, SmoothScroll, TransitionOverlay
   components/threshold/     entry ritual + its inline pre-paint script
@@ -70,10 +75,13 @@ apps/web/
   components/chapters/      BurnReveal, ReleaseCard, SealedSlot
   components/media/         SpotifyEmbed/Player, TeaserPlayer, VideoCard, ReleaseStatus/Ctas
   components/ui/            primitives (GlitchText, SectionHeading, Cta, TransitionLink, Monogram, …)
+  components/merch/         ProductCard, FilterBar, PurchasePanel (the only client leaf), CartLineRow, …
   lib/                      world-store, audio-engine, spotify, analytics, og, jsonld, grade-css, site-url
+  lib/merch/                fourthwall.ts (server-only client) · schema (zod) · model · selection ·
+                            catalogue (search/filter/sort) · checkout (URLs) · cart · rich-text (sanitiser)
   shaders/                  GLSL (world smoke/particles, burn dissolve)
   scripts/verify-sealed.mjs leak check (build + --repo modes)
-  e2e/                      Playwright specs
+  e2e/                      Playwright specs; e2e/fourthwall-mock/ = stateful Storefront API mock
 ```
 
 ## Content workflow
@@ -85,6 +93,16 @@ All content is typed data in `packages/content/src/data/`. It is validated on im
 - **Releases:** `releases.ts`. Only announced or released items. Fields: dates (`YYYY-MM-DD` = local midnight), `spotify`, `presaveUrl`, `tracks`, `teaser`, `videos`, `grade`, `position`.
 - **Sealed slots:** `slots.ts`. Cryptic placeholders. Slots with `kind: "transmission"` are upcoming videos, shown first in Visions.
 - **Veiled slots (an artist-approved tease):** add `veil: {}` (or `veil: { at, keep }` for a video frame) to a slot, and put the source in gitignored `assets/sealed/<slot-id>.*`. `pnpm media` keeps only the top `keep` of the frame (dropping title bands and captions), shrinks it to ~32px and blurs it into `public/media/sealed/<slot-id>.webp`. **Always look at the output.** No text may be legible, and the filename is the neutral slot id. On reveal day, delete the slot and its `assets/sealed/` source.
+
+### Merch (Fourthwall)
+
+- **Switch:** `site.ts` → `merch.enabled`. When it's `false`, every merch link disappears and `/merch` is a 404.
+- **What's listed:** the Fourthwall collection in `FOURTHWALL_COLLECTION_SLUG` (default `all`). Every other public collection becomes a category tab. Only `access: PUBLIC` products show. Hidden, private or archived products are 404s.
+- **Search, filters, sort:** Fourthwall's Storefront API has none of these (only collections and pages). They run server-side in `lib/merch/catalogue.ts` over the cached collection, driven by the URL.
+- **Caching:** collections 10 min, catalogue 2 min, product 1 min (fetch data cache, tag `merch`). Carts are never cached. **Every merch route renders per request, and the build never calls Fourthwall.** Don't add `generateStaticParams` or product URLs to the sitemap.
+- **Cart:** Fourthwall Cart API. The cart id (`bt_cart`) and count (`bt_cart_n`) are httpOnly cookies scoped to `/merch`. The Server Actions in `app/merch/actions.ts` re-fetch the product and resolve options to a variant server-side. Bundles go in as one item per part, sharing a `bundleId`.
+- **Checkout:** `https://<shop>/cart/checkout?cartId=…&currency=USD` (or `?products=<variant>:<qty>` for "buy now", regular products only), plus allowlisted attribution. Fourthwall does everything after that.
+- **Sealed:** remote items whose name or slug contains a `SEALED_TERMS` term are dropped at runtime. Merch never passes through the build's leak check, so keep `SEALED_TERMS` set on Vercel.
 
 ### Reveal playbook (announce day)
 
@@ -115,6 +133,8 @@ When the album is announced, give the era its `title` in `eras.ts`.
 6. **The Spotify embed stays visible.** Style the frame around it. Don't build a hidden or custom player on top. Don't use the Spotify Web API.
 7. **The wordmark stays server-rendered text** (the LCP). WebGL loads after first paint via `next/dynamic({ ssr: false })`.
 8. Keep `apps/web`'s `build` script as `next build && node scripts/verify-sealed.mjs`. Vercel runs the app's script directly, not the root turbo pipeline.
+9. **The Fourthwall Storefront token is server-only.** Only `lib/merch/fourthwall.ts` → `request()` reads it, and only into the request URL. Never render, log, return or forward it, and never put it in a `NEXT_PUBLIC_*` var. Errors at that boundary carry no URL or `cause`. Never add Fourthwall Open API (Basic Auth) credentials, and never collect payment or address details on this site.
+10. **Never render remote HTML raw.** Fourthwall descriptions go through `lib/merch/rich-text.tsx` (an allowlist rendered to React elements).
 
 ## Code conventions
 
@@ -135,12 +155,13 @@ When the album is announced, give the era its `title` in `eras.ts`.
 - Initial route JS ≈ 180 KB gz or less, excluding the lazy WebGL chunk.
 - World canvas: DPR ≤ 1.5 × tier factor, 30fps on low tier, paused when the tab is hidden.
 - `/links` has no WebGL and must stay instant (it's the IG/TikTok bio link).
+- `/merch` is lean too: server-rendered, with small client leaves only (`next/form`, `PurchasePanel`, `CheckoutLink`). No WebGL/GSAP/Lenis.
 
 ## Verification checklist (before calling something done)
 
 1. `pnpm lint && pnpm typecheck && pnpm test`
 2. `pnpm build`: leak check clean, placeholder warnings reviewed.
-3. `pnpm test:e2e`: covers no-JS wordmark, threshold behaviour, 404 for unknown/sealed slugs, `/links`, JSON-LD/OG, no overflow at 375px, no first-party console errors.
+3. `pnpm test:e2e`: covers no-JS wordmark, threshold behaviour, 404 for unknown/sealed slugs, `/links`, JSON-LD/OG, no overflow at 375px, no first-party console errors, and the merch journey (search, filters, options, cart, bundle, stock limit, checkout hand-off) against the Fourthwall mock.
 4. Look at it: desktop 1440 and mobile 375, with and without reduced motion.
 5. `pnpm verify:repo` before committing.
 
@@ -148,6 +169,9 @@ When the album is announced, give the era its `title` in `eras.ts`.
 
 - Project root: `apps/web` (framework: Next.js). Install from the monorepo root with pnpm. Turborepo is detected.
 - Env vars: `NEXT_PUBLIC_SITE_URL` (canonical origin; falls back to the Vercel production domain) and `SEALED_TERMS` (the denylist, comma-separated, **production + preview**). See `.env.example`.
+- Locally, env files can live at the repo root (`.env.local`, next to `.env.example`) or in `apps/web/`. `next.config.ts` loads the root ones without overriding anything already set.
+- Merch env vars: `FOURTHWALL_STOREFRONT_TOKEN` (**secret**, production + preview), `NEXT_PUBLIC_FOURTHWALL_SHOP_DOMAIN` (bare hostname of the **shop** domain, the one `GET /v1/shop` reports) and optionally `FOURTHWALL_COLLECTION_SLUG`. All are read at request time, so a change only needs a redeploy, not a code change.
+- In Fourthwall, set the shop's External Store URL to `https://blkthrone.com/merch`.
 - Enable Web Analytics + Speed Insights in the Vercel dashboard. Custom outbound events need the Pro plan.
 
 <!-- BEGIN:turborepo-agent-rules -->

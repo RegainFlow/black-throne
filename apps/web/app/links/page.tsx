@@ -91,6 +91,20 @@ export default function LinksPage() {
                 </OutboundLink>
               </li>
             ))}
+          {site.merch.enabled && (
+            <li>
+              <Link
+                href="/merch"
+                className="group flex w-full items-center justify-between gap-4 border border-bone/15 bg-void/80 px-5 py-4 transition-colors hover:border-accent"
+              >
+                <span className="display-title shrink-0 text-base text-bone">Merch</span>
+                <span className="mono-label flex min-w-0 items-center gap-2 transition-colors group-hover:text-accent">
+                  <span className="truncate">official store</span>
+                  <span aria-hidden="true">→</span>
+                </span>
+              </Link>
+            </li>
+          )}
           <li>
             <Link
               href="/"

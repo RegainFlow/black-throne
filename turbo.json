@@ -6,7 +6,16 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "!e2e/**", "$TURBO_ROOT$/sealed.local.json"],
       "outputs": [".next/**", "!.next/cache/**"],
-      "env": ["VERCEL", "VERCEL_ENV", "VERCEL_PROJECT_PRODUCTION_URL", "SEALED_TERMS"]
+      "env": [
+        "VERCEL",
+        "VERCEL_ENV",
+        "VERCEL_PROJECT_PRODUCTION_URL",
+        "SEALED_TERMS",
+        "FOURTHWALL_STOREFRONT_TOKEN",
+        "FOURTHWALL_COLLECTION_SLUG",
+        "FOURTHWALL_API_BASE_URL",
+        "NEXT_PUBLIC_FOURTHWALL_SHOP_DOMAIN"
+      ]
     },
     "dev": {
       "cache": false,

@@ -14,7 +14,8 @@ const LINKS = [
   { id: "signals", label: "signals" },
 ];
 
-export function Nav() {
+/** `showMerch` adds a quiet final "merch" entry (a lean route, not a section of the world). */
+export function Nav({ showMerch = false }: { showMerch?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDivElement>(null);
@@ -58,6 +59,11 @@ export function Nav() {
               {l.label}
             </TransitionLink>
           ))}
+          {showMerch && (
+            <TransitionLink href="/merch" className="mono-label transition-colors hover:text-bone">
+              merch
+            </TransitionLink>
+          )}
           <span aria-hidden="true" className="h-3 w-px bg-smoke/40" />
           <SoundToggle />
         </nav>
@@ -93,6 +99,17 @@ export function Nav() {
             {l.label}
           </TransitionLink>
         ))}
+        {showMerch && (
+          <TransitionLink
+            href="/merch"
+            data-menu-item
+            onClick={() => setOpen(false)}
+            className="display-title flex items-baseline gap-4 text-4xl text-bone/70"
+          >
+            <span className="mono-label text-accent">0{LINKS.length + 1}</span>
+            merch
+          </TransitionLink>
+        )}
       </div>
     </>
   );

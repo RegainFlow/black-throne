@@ -17,10 +17,11 @@ const WorldCanvas = dynamic(() => import("./WorldCanvas"), { ssr: false });
 interface Props {
   hud: Partial<Record<GradeId, string[]>>;
   teaserSrc?: string;
+  showMerch?: boolean;
 }
 
 /** Everything that lives above/below the page and survives navigation. */
-export function WorldShell({ hud, teaserSrc }: Props) {
+export function WorldShell({ hud, teaserSrc, showMerch }: Props) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export function WorldShell({ hud, teaserSrc }: Props) {
       <div aria-hidden="true" className="bt-scanlines" />
       <div aria-hidden="true" className="bt-vignette" />
       <div aria-hidden="true" className="bt-grain" />
-      <Nav />
+      <Nav showMerch={showMerch} />
       <Hud lines={hud} />
       <Cursor />
       <SmoothScroll />

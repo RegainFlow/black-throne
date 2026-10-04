@@ -258,6 +258,65 @@ html[data-threshold] body {
       var(--bt-void);
   }
 
+  /* Sanitised remote copy on /merch (product descriptions, size & returns notes). */
+  .bt-prose {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    line-height: 1.55;
+    color: color-mix(in oklab, var(--bt-bone) 82%, transparent);
+    overflow-wrap: anywhere;
+  }
+  .bt-prose :where(h3, h4) {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.22em;
+    text-transform: lowercase;
+    color: var(--bt-smoke);
+  }
+  .bt-prose :where(ul, ol) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-left: 1.2rem;
+  }
+  .bt-prose ul {
+    list-style: square;
+  }
+  .bt-prose ol {
+    list-style: decimal;
+  }
+  .bt-prose strong {
+    font-weight: 500;
+    color: var(--bt-bone);
+  }
+  .bt-prose a {
+    color: var(--bt-bone);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .bt-prose a:hover {
+    color: var(--bt-accent);
+  }
+  .bt-prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+  .bt-prose :where(th, td) {
+    border-bottom: 1px solid color-mix(in oklab, var(--bt-bone) 12%, transparent);
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .bt-prose th {
+    color: var(--bt-smoke);
+    font-weight: 400;
+  }
+
   /* CSS-only drifting smoke for /links and fallbacks. */
   .bt-smoke-css {
     position: fixed;

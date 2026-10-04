@@ -2,7 +2,7 @@
 
 > **heavy sound. dark truth.** Every album is a chapter of the same world, and every chapter explores a different kind of weight.
 
-This site is a world, not a band page. A first-time visitor should feel *"what is this?"* and want to go deeper. It is dark, cinematic and unsettling, but always clean and high-end. It exists to **promote**: every surface pushes toward listening, following and sharing. It sells nothing.
+This site is a world, not a band page. A first-time visitor should feel *"what is this?"* and want to go deeper. It is dark, cinematic and unsettling, but always clean and high-end. It exists to **promote**: every world surface pushes toward listening, following and sharing. Merch is a separate, secondary lean page (`/merch`). It is never the point of the world, and Fourthwall's hosted checkout owns payment, tax, shipping and fulfilment.
 
 ---
 
@@ -123,7 +123,7 @@ The crown, throne and halo motifs are **subtle**: the faint halo ring in the sha
 
 | Effect | Where | Trigger | Key params | Reduced motion / fallback |
 |---|---|---|---|---|
-| **Threshold ritual** | `components/threshold` | first visit per session (inline head script sets `html[data-threshold]`) | type-on line, breathing sigil, ash burst on exit | never shown; no-JS visitors and crawlers skip it; `/links` skips it |
+| **Threshold ritual** | `components/threshold` | first visit per session (inline head script sets `html[data-threshold]`) | type-on line, breathing sigil, ash burst on exit | never shown; no-JS visitors and crawlers skip it; `/links` and `/merch` skip it |
 | **Ash world** | `components/world/WorldCanvas` | always | DPR × tier, 30–60fps, particles 360–1400 | single still frame; CSS fallback if no WebGL |
 | **Audio reactivity** | `lib/audio-engine` → store → shader | teaser playing | low → turbulence + wordmark tremor; mid → shaft; high → embers; kick → ring + glitch | bands stay 0 |
 | **World re-grading** | `GradeController` | `[data-grade-section]` crosses viewport centre | `@property` colour transitions 1.8s; uniform lerp | instant swap |
@@ -158,12 +158,26 @@ Unannounced releases **do not exist** in this codebase until reveal day.
 
 ---
 
-## 11. Do / Don't
+## 11. Merch (lean page)
+
+`/merch` is a quiet extension of the world, not a shop template. It's reached from a last "merch" entry in the nav, the footer and `/links`, and never from a home-page section.
+
+- **Lean.** Same `StaticBackdrop`, grade `ii`, no WebGL/GSAP/Lenis, and no threshold (the pre-paint script exempts `/merch`). It must stay fast on mobile.
+- **Grid in hairlines.** Products sit on 4:5 frames with `border-bone/10`. Names are Cinzel (`display-title`). Prices, stock and labels are Plex Mono. 2 columns at 375px, 3 at md, 4 at xl.
+- **States are words, not badges.** `sold out` is a mono line in accent and the image goes grayscale. `only n left` is a mono line. Bundles get one small `bundle` tag. No sale ribbons, countdowns or urgency popups.
+- **Filters are a form.** Search and sort are always visible. Size, colour, stock and price sit in one `<details>`. Category tabs are Fourthwall collections. Every state is a URL, and it all works without JavaScript.
+- **Options are native radios** in fieldsets, shown as hairline chips with a colour swatch. Unavailable combinations are dashed and disabled, and sold-out ones are struck through.
+- **Checkout leaves the site.** The cart hands off to Fourthwall's hosted checkout in the same tab. We never collect payment or address details.
+- **Remote copy** (descriptions, size and returns notes) renders through the sanitiser in `.bt-prose`: serif body and mono tables. It is never raw HTML.
+
+---
+
+## 12. Do / Don't
 
 **Do**
 - Let the artwork carry the page. The covers are the best design asset we have.
 - Keep the text short and give it room around it.
-- Make every CTA lead somewhere promotional: listen, pre-save, follow, share.
+- On world pages, make every CTA lead somewhere promotional: listen, pre-save, follow, share. Commerce CTAs live only on `/merch`.
 - Test at 375px and with reduced motion.
 
 **Don't**

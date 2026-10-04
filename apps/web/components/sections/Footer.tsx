@@ -13,6 +13,11 @@ export function Footer({ site, releases }: { site: Site; releases: PublicRelease
             {r.title.toLowerCase()}
           </TransitionLink>
         ))}
+        {site.merch.enabled && (
+          <TransitionLink href="/merch" className="hover:text-bone">
+            merch
+          </TransitionLink>
+        )}
         <TransitionLink href="/links" className="hover:text-bone">
           all links
         </TransitionLink>

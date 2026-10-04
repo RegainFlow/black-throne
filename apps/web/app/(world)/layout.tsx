@@ -17,7 +17,7 @@ export default function WorldLayout({ children }: { children: React.ReactNode })
 
   return (
     <>
-      <WorldShell hud={hud} teaserSrc={teaser?.src} />
+      <WorldShell hud={hud} teaserSrc={teaser?.src} showMerch={site.merch.enabled} />
       <Threshold line={site.thresholdLine} hasTeaser={Boolean(teaser)} />
       <div className="relative z-10">{children}</div>
     </>

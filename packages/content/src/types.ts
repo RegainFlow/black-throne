@@ -127,6 +127,11 @@ export interface Site {
   thresholdLine: string;
   spotifyArtist: { uri: string; url: string };
   socials: SocialLink[];
+  /**
+   * The Fourthwall merch store at /merch (a secondary, lean page; checkout is Fourthwall's).
+   * `enabled: false` hides every merch link and makes /merch a 404.
+   */
+  merch: { enabled: boolean };
 }
 
 /* ---------- media manifest (written by `pnpm media`) ---------- */
