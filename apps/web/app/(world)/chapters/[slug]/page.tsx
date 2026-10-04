@@ -50,6 +50,7 @@ export async function generateMetadata({
     title: release.title,
     description,
     path: `/chapters/${slug}`,
+    ownImage: true, // opengraph-image.tsx: the cover card
     og:
       release.kind === "album"
         ? { type: "music.album", musicians, releaseDate: release.releaseDate }

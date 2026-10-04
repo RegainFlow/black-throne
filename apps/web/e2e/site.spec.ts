@@ -2,21 +2,23 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 
-/** Upcoming slugs come from the gitignored denylist at runtime — never written into this file. */
-function sealedSlugs(): string[] {
+/** Upcoming terms come from the gitignored denylist at runtime — never written into this file. */
+function sealedTerms(): string[] {
   const file = join(__dirname, "../../../sealed.local.json");
   const fromEnv = (process.env.SEALED_TERMS ?? "").split(/[,\n]/);
   const fromFile = existsSync(file)
     ? (JSON.parse(readFileSync(file, "utf8")).terms as string[])
     : [];
-  return [...fromFile, ...fromEnv]
-    .map((t) => t.trim())
-    .filter((t) => /^[a-z0-9]+(-[a-z0-9]+)+$/.test(t));
+  // Same floor as scripts/verify-sealed.mjs: shorter terms match too much to mean anything.
+  return [...fromFile, ...fromEnv].map((t) => t.trim()).filter((t) => t.length >= 4);
 }
+
+const sealedSlugs = () => sealedTerms().filter((t) => /^[a-z0-9]+(-[a-z0-9]+)+$/.test(t));
 
 const PAGES = [
   "/",
   "/links",
+  "/about",
   "/chapters/dystopia",
   "/chapters/house-of-ash",
   // merch (served from the Fourthwall mock, see playwright.config.ts)
@@ -59,9 +61,11 @@ test.describe("first paint", () => {
     await ctx.close();
   });
 
-  test("the link-in-bio page skips the threshold", async ({ page }) => {
-    await page.goto("/links");
-    await expect(page.locator("html")).not.toHaveAttribute("data-threshold", /.*/);
+  test("the lean pages (link-in-bio, about) skip the threshold", async ({ page }) => {
+    for (const path of ["/links", "/about"]) {
+      await page.goto(path);
+      await expect(page.locator("html"), path).not.toHaveAttribute("data-threshold", /.*/);
+    }
   });
 
   test("the merch pages skip the threshold and can scroll", async ({ page }) => {
@@ -126,6 +130,35 @@ test.describe("content", () => {
     );
   });
 
+  // What Facebook, X, iMessage and Discord read when a link is shared. Every page needs all of it.
+  for (const path of PAGES.filter((p) => p !== "/merch/cart")) {
+    test(`${path} has a working share card`, async ({ page, request }) => {
+      await page.goto(path);
+      const meta = (key: string) =>
+        page
+          .locator(`meta[property="${key}"], meta[name="${key}"]`)
+          .first()
+          .getAttribute("content");
+      const image = await meta("og:image");
+      const url = await meta("og:url");
+      expect(image, "og:image").toMatch(/^https?:\/\//);
+      expect(await meta("twitter:image"), "twitter:image").toBe(image);
+      expect(await meta("twitter:card")).toBe("summary_large_image");
+      expect(await meta("og:title")).toBeTruthy();
+      expect(await meta("og:description")).toBeTruthy();
+      expect(url, "og:url is the canonical").toBe(
+        await page.locator('link[rel="canonical"]').getAttribute("href"),
+      );
+      expect(new URL(url as string).pathname, "the canonical is the page itself").toBe(path);
+      if (path.startsWith("/chapters/")) expect(image).toContain(`${path}/opengraph-image`);
+
+      const { pathname, search } = new URL(image as string);
+      const res = await request.get(pathname + search);
+      expect(res.status(), image as string).toBe(200);
+      expect(res.headers()["content-type"]).toBe("image/png");
+    });
+  }
+
   test("sealed slots reveal nothing but 'not yet'", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
@@ -133,6 +166,78 @@ test.describe("content", () => {
     const slots = page.getByRole("button", { name: /not yet revealed/i });
     expect(await slots.count()).toBeGreaterThan(0);
     await ctx.close();
+  });
+});
+
+test.describe("search and answer engines", () => {
+  const RELEASES = ["dystopia", "house-of-ash"];
+
+  test("robots.txt lets every crawler in, keeps the cart out, and points at the sitemap", async ({
+    request,
+  }) => {
+    const robots = await (await request.get("/robots.txt")).text();
+    expect(robots).toMatch(/User-Agent: \*/i);
+    expect(robots).toMatch(/^Allow: \/$/m);
+    expect(robots).toMatch(/^Disallow: \/merch\/cart$/m);
+    expect(robots).toMatch(/^Sitemap: https?:\/\/\S+\/sitemap\.xml$/m);
+  });
+
+  test("the sitemap lists about and every chapter, with cover images", async ({ request }) => {
+    const sitemap = await (await request.get("/sitemap.xml")).text();
+    expect(sitemap).toMatch(/\/about<\/loc>/);
+    for (const slug of RELEASES) expect(sitemap).toContain(`/chapters/${slug}</loc>`);
+    expect(sitemap).toContain("<image:loc>");
+    expect(sitemap).toContain("<lastmod>");
+  });
+
+  test("/about states the facts in HTML, with MusicGroup and FAQPage JSON-LD", async ({ page }) => {
+    await page.goto("/about");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/black throne/i);
+    const discography = page.getByRole("heading", { name: /discography/i });
+    await expect(discography).toBeVisible();
+    for (const slug of RELEASES) {
+      await expect(page.locator(`main a[href="/chapters/${slug}"]`).first()).toBeVisible();
+    }
+    await expect(page.getByText(/what genre is black throne\?/i)).toBeVisible();
+    await expect(page.locator('a[href="https://www.youtube.com/"]')).toHaveCount(0);
+
+    const types = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll((els) => els.map((e) => JSON.parse(e.textContent ?? "{}")["@type"]));
+    expect(types).toEqual(expect.arrayContaining(["MusicGroup", "FAQPage"]));
+  });
+
+  test("the footer links to /about", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "about" }),
+    ).toHaveAttribute("href", "/about");
+  });
+
+  test("/llms.txt is plain Markdown listing every release and official profile", async ({
+    request,
+  }) => {
+    const res = await request.get("/llms.txt");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toMatch(/^text\/plain/);
+    const txt = await res.text();
+    expect(txt.startsWith("# Black Throne\n\n> ")).toBe(true);
+    for (const slug of RELEASES) expect(txt).toContain(`/chapters/${slug})`);
+    expect(txt).toContain("open.spotify.com");
+    expect(txt).toContain("instagram.com/theblackthrone.official");
+    expect(txt).not.toContain("https://www.youtube.com/)"); // placeholder stays hidden
+    expect(txt).not.toMatch(/undefined|null/);
+  });
+
+  test("nothing sealed reaches /about or /llms.txt", async ({ request }) => {
+    const terms = sealedTerms();
+    test.skip(terms.length === 0, "no local denylist");
+    for (const path of ["/about", "/llms.txt"]) {
+      const body = (await (await request.get(path)).text()).toLowerCase();
+      for (const term of terms) {
+        expect(body.includes(term.toLowerCase()), `${path} mentions a sealed term`).toBe(false);
+      }
+    }
   });
 });
 

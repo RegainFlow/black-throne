@@ -65,7 +65,9 @@ packages/
 apps/web/
   app/layout.tsx            lean root: fonts, grade tokens, pre-paint threshold script — no client world
   app/(world)/              the cinematic group: layout mounts WorldShell + Threshold; / and /chapters/[slug]
-  app/links, app/not-found  lean pages (StaticBackdrop, plain next/link) — no WebGL/GSAP/Lenis
+  app/links, app/about,     lean pages (StaticBackdrop, plain next/link) — no WebGL/GSAP/Lenis
+  app/not-found
+  app/llms.txt/             /llms.txt route (force-static, so the leak check scans it)
   app/merch/                lean merch store: listing (+search/filters), [slug], cart, Server Actions
   proxy.ts                  /merch only: keeps allowlisted utm_*/gclid/fbclid for checkout
   app/                      also: OG images · sitemap · robots · manifest
@@ -75,8 +77,9 @@ apps/web/
   components/chapters/      BurnReveal, ReleaseCard, SealedSlot
   components/media/         SpotifyEmbed/Player, TeaserPlayer, VideoCard, ReleaseStatus/Ctas
   components/ui/            primitives (GlitchText, SectionHeading, Cta, TransitionLink, Monogram, …)
-  components/merch/         ProductCard, FilterBar, PurchasePanel (the only client leaf), CartLineRow, …
-  lib/                      world-store, audio-engine, spotify, analytics, og, jsonld, grade-css, site-url
+  components/merch/         ProductCard, FilterBar, Gallery + PurchasePanel (client leaves), CartLineRow, …
+  lib/                      world-store, audio-engine, spotify, analytics, og, jsonld, grade-css, site-url,
+                            seo (pageMeta) · about (facts model for /about + /llms.txt) · llms
   lib/merch/                fourthwall.ts (server-only client) · schema (zod) · model · selection ·
                             catalogue (search/filter/sort) · checkout (URLs) · cart · rich-text (sanitiser)
   shaders/                  GLSL (world smoke/particles, burn dissolve)
@@ -89,6 +92,7 @@ apps/web/
 All content is typed data in `packages/content/src/data/`. It is validated on import, and a bad edit fails the build with a readable error.
 
 - **Links / copy:** `site.ts`. Socials marked `placeholder: true` are hidden on the site and make production builds print a warning until they are replaced.
+- **Artist facts:** `site.ts` → `profile` (genres, alternate names, and optional bio, origin, year formed, lineup, influences, contact) and `profiles` (official profiles that aren't social buttons: Apple Music, Wikidata, MusicBrainz…). They feed `/about`, `/llms.txt` and the MusicGroup JSON-LD (`sameAs`). **Only artist-confirmed facts.** An unset field renders nothing, and production builds list the missing ones.
 - **Eras (chapters):** `eras.ts`. `title: null` renders a redaction bar.
 - **Releases:** `releases.ts`. Only announced or released items. Fields: dates (`YYYY-MM-DD` = local midnight), `spotify`, `presaveUrl`, `tracks`, `teaser`, `videos`, `grade`, `position`.
 - **Sealed slots:** `slots.ts`. Cryptic placeholders. Slots with `kind: "transmission"` are upcoming videos, shown first in Visions.
@@ -99,6 +103,7 @@ All content is typed data in `packages/content/src/data/`. It is validated on im
 - **Switch:** `site.ts` → `merch.enabled`. When it's `false`, every merch link disappears and `/merch` is a 404.
 - **What's listed:** the Fourthwall collection in `FOURTHWALL_COLLECTION_SLUG` (default `all`). Every other public collection becomes a category tab. Only `access: PUBLIC` products show. Hidden, private or archived products are 404s.
 - **Search, filters, sort:** Fourthwall's Storefront API has none of these (only collections and pages). They run server-side in `lib/merch/catalogue.ts` over the cached collection, driven by the URL.
+- **Colour and photos:** Fourthwall attaches each colour's mockups to that colour's variants. `lib/merch/gallery.ts` groups them into one set per colour, adding any photo that no variant claims. The colour lives in the URL (`?color=`): `PurchasePanel` writes it with `history.replaceState`, `Gallery` reads it, and while a colour filter is on, product cards link with it. Unknown colours are ignored.
 - **Caching:** collections 10 min, catalogue 2 min, product 1 min (fetch data cache, tag `merch`). Carts are never cached. **Every merch route renders per request, and the build never calls Fourthwall.** Don't add `generateStaticParams` or product URLs to the sitemap.
 - **Cart:** Fourthwall Cart API. The cart id (`bt_cart`) and count (`bt_cart_n`) are httpOnly cookies scoped to `/merch`. The Server Actions in `app/merch/actions.ts` re-fetch the product and resolve options to a variant server-side. Bundles go in as one item per part, sharing a `bundleId`.
 - **Checkout:** `https://<shop>/cart/checkout?cartId=…&currency=USD` (or `?products=<variant>:<qty>` for "buy now", regular products only), plus allowlisted attribution. Fourthwall does everything after that.
@@ -110,10 +115,26 @@ All content is typed data in `packages/content/src/data/`. It is validated on im
 2. Remove its title, slug and filenames from `sealed.local.json` **and** from `SEALED_TERMS` on Vercel.
 3. Fill in `announceDate`/`releaseDate`, plus `presaveUrl` or `spotify`.
 4. Make sure its masters are in `assets/<slug>/`, then run `pnpm media`. Check the printed palette (add a grade in `grades.ts` + `DESIGN.md`) and the teaser window (**get the artist's OK**).
-5. Run `pnpm build` (the leak check must pass), `pnpm test:e2e` and `pnpm verify:repo`.
+5. Run `pnpm build` (the leak check must pass), `pnpm test:e2e` and `pnpm verify:repo`. Read `/about` and `/llms.txt`: they update themselves from the content, but hand-written `profile.bio` copy must never get ahead of a reveal.
 6. Deploy. The page, OG image, sitemap entry and chapter slot all update together.
 
 When the album is announced, give the era its `title` in `eras.ts`.
+
+### SEO and answer engines
+
+Everything is generated from the content package, so a reveal updates it all at once.
+
+- **Metadata:** every page uses `pageMeta` (`lib/seo.ts`): a self canonical, og:url, the share card and the large Twitter card. See Code conventions.
+- **Structured data** (`lib/jsonld.ts`, rendered with `components/ui/JsonLd.tsx`):
+  - Home has `MusicGroup` + `WebSite`.
+  - Chapters have `MusicAlbum` (singles use `albumReleaseType: SingleRelease`) + `BreadcrumbList`.
+  - `/about` has `MusicGroup` + `FAQPage`.
+  - Merch products have `Product`.
+  - Every node points at one artist id, `<origin>/#artist`. `sameAs` lists every official profile, which is how Google and LLMs tell this artist apart from everything else called "Black Throne".
+- **`/about`** is the plain-HTML fact sheet for search crawlers and the answer engines built on them: bio, facts, discography with tracklists, official links and an FAQ. **`/llms.txt`** renders the same model (`lib/about.ts`) as Markdown. Both are static and use public releases only, never slots.
+- **Crawlers:** `robots.ts` lets everyone in, AI crawlers included (training and search: the artist's call, 2026-10-04), and keeps only `/merch/cart` out.
+- **Sitemap:** home, `/about`, `/links`, `/merch` and every chapter, with `lastmod` and cover images. Merch products are left out.
+- **The footer** carries `site.description` as visible text. It's the one plain sentence on the home page saying who this is.
 
 ### Media pipeline (`pnpm media`)
 
@@ -146,6 +167,7 @@ When the album is announced, give the era its `title` in `eras.ts`.
 - Don't put `em` letter-spacing on a parent of differently sized text. Put the tracking on the sized element.
 - Component CSS goes in `@layer components`, so Tailwind utilities (`hidden`, `md:*`) can override it.
 - Pages that need the world go under `app/(world)/`. Lean pages outside it use `StaticBackdrop` and plain `next/link`. `TransitionLink` falls back to normal navigation when no overlay is mounted.
+- **Every page sets its metadata with `pageMeta` (`lib/seo.ts`).** Next merges metadata shallowly, so a page that skips it inherits another route's canonical and og:url, and a page that sets `openGraph` by hand loses the share image. `pageMeta` adds the site card. A segment with its own `opengraph-image` file passes `ownImage` (config images beat the file). The e2e "share card" test checks every page.
 - Env vars a build reads must be declared in `turbo.json` → `tasks.build.env`. Turbo 2 runs in strict env mode, and an undeclared var is silently `undefined`: `VERCEL` gates analytics, and `VERCEL_PROJECT_PRODUCTION_URL` drives canonical/OG/sitemap URLs.
 - Follow Biome. `biome-ignore` comments need a reason.
 
@@ -155,13 +177,13 @@ When the album is announced, give the era its `title` in `eras.ts`.
 - Initial route JS ≈ 180 KB gz or less, excluding the lazy WebGL chunk.
 - World canvas: DPR ≤ 1.5 × tier factor, 30fps on low tier, paused when the tab is hidden.
 - `/links` has no WebGL and must stay instant (it's the IG/TikTok bio link).
-- `/merch` is lean too: server-rendered, with small client leaves only (`next/form`, `PurchasePanel`, `CheckoutLink`). No WebGL/GSAP/Lenis.
+- `/merch` is lean too: server-rendered, with small client leaves only (`next/form`, `Gallery`, `PurchasePanel`, `CheckoutLink`). No WebGL/GSAP/Lenis.
 
 ## Verification checklist (before calling something done)
 
 1. `pnpm lint && pnpm typecheck && pnpm test`
 2. `pnpm build`: leak check clean, placeholder warnings reviewed.
-3. `pnpm test:e2e`: covers no-JS wordmark, threshold behaviour, 404 for unknown/sealed slugs, `/links`, JSON-LD/OG, no overflow at 375px, no first-party console errors, and the merch journey (search, filters, options, cart, bundle, stock limit, checkout hand-off) against the Fourthwall mock.
+3. `pnpm test:e2e`: covers no-JS wordmark, threshold behaviour, 404 for unknown/sealed slugs, `/links`, JSON-LD/OG, a working share card on every page, `/about` + `/llms.txt` + robots + sitemap (with nothing sealed in them), no overflow at 375px, no first-party console errors, and the merch journey (search, filters, options, cart, bundle, stock limit, checkout hand-off) against the Fourthwall mock.
 4. Look at it: desktop 1440 and mobile 375, with and without reduced motion.
 5. `pnpm verify:repo` before committing.
 
@@ -169,6 +191,7 @@ When the album is announced, give the era its `title` in `eras.ts`.
 
 - Project root: `apps/web` (framework: Next.js). Install from the monorepo root with pnpm. Turborepo is detected.
 - Env vars: `NEXT_PUBLIC_SITE_URL` (canonical origin; falls back to the Vercel production domain) and `SEALED_TERMS` (the denylist, comma-separated, **production + preview**). See `.env.example`.
+- **The canonical origin must be a host that always answers.** Every canonical, og:url, share image and sitemap entry is built on it. If share previews break intermittently, check DNS first: `nslookup` should list only Vercel's addresses.
 - Locally, env files can live at the repo root (`.env.local`, next to `.env.example`) or in `apps/web/`. `next.config.ts` loads the root ones without overriding anything already set.
 - Merch env vars: `FOURTHWALL_STOREFRONT_TOKEN` (**secret**, production + preview), `NEXT_PUBLIC_FOURTHWALL_SHOP_DOMAIN` (bare hostname of the **shop** domain, the one `GET /v1/shop` reports) and optionally `FOURTHWALL_COLLECTION_SLUG`. All are read at request time, so a change only needs a redeploy, not a code change.
 - In Fourthwall, set the shop's External Store URL to `https://blkthrone.com/merch`.
