@@ -146,6 +146,10 @@ test.describe("content", () => {
       expect(await meta("twitter:card")).toBe("summary_large_image");
       expect(await meta("og:title")).toBeTruthy();
       expect(await meta("og:description")).toBeTruthy();
+      expect(await meta("description"), "meta description").toBeTruthy();
+      expect(await meta("og:site_name")).toBe("BLACK THRONE");
+      expect(await meta("og:locale")).toBe("en_US");
+      await expect(page).toHaveTitle(/BLACK THRONE/);
       expect(url, "og:url is the canonical").toBe(
         await page.locator('link[rel="canonical"]').getAttribute("href"),
       );
@@ -158,6 +162,18 @@ test.describe("content", () => {
       expect(res.headers()["content-type"]).toBe("image/png");
     });
   }
+
+  test("every page has its own title, and the cart stays out of search", async ({ page }) => {
+    const titles = new Map<string, string>();
+    for (const path of PAGES) {
+      await page.goto(path);
+      const title = await page.title();
+      expect(titles.has(title), `${path} repeats the title of ${titles.get(title)}`).toBe(false);
+      titles.set(title, path);
+    }
+    await page.goto("/merch/cart");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  });
 
   test("sealed slots reveal nothing but 'not yet'", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });

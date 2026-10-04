@@ -5,6 +5,7 @@ import { aboutModel, formatReleaseDate } from "./about";
 import { gradeCss } from "./grade-css";
 import { artistId, faqLd, ldScript, musicGroup, releaseLd, websiteLd } from "./jsonld";
 import { buildLlmsTxt } from "./llms";
+import { clip } from "./seo";
 
 const site: Site = {
   name: "Black Throne",
@@ -179,5 +180,17 @@ describe("about + llms.txt", () => {
     expect(txt).not.toContain("instagram.com");
     expect(txt).not.toMatch(/undefined|null/);
     expect(txt).toContain("Chapter II.");
+  });
+});
+
+describe("clip", () => {
+  it("leaves short text alone and flattens whitespace", () => {
+    expect(clip("  Heavy\n cotton.  ")).toBe("Heavy cotton.");
+  });
+
+  it("cuts long text on a word boundary, within the limit", () => {
+    const out = clip("one two three four five", 12);
+    expect(out).toBe("one two…");
+    expect(out.length).toBeLessThanOrEqual(12);
   });
 });

@@ -13,29 +13,31 @@ import { getProduct } from "@/lib/merch/fourthwall";
 import { findSet, imageSets } from "@/lib/merch/gallery";
 import { RichText } from "@/lib/merch/rich-text";
 import type { MerchItem, MerchOffer } from "@/lib/merch/types";
+import { clip, pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
 
 export async function generateMetadata({ params }: PageProps<"/merch/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   if (!isProductSlug(slug)) return {};
   const res = await getProduct(slug);
-  if (!res.ok || !res.value) return { title: "Merch" };
+  const { name } = getSite();
+  // Fourthwall down: still a complete set of tags, so a share made now isn't blank.
+  if (!res.ok || !res.value) {
+    return pageMeta({
+      title: "Merch",
+      description: `Official ${name} merch.`,
+      path: `/merch/${slug}`,
+      ownImage: true,
+    });
+  }
   const item = res.value;
-  const description = (item.text || `${item.name} — official Black Throne merch.`).slice(0, 160);
-  const title = `${item.name} — BLACK THRONE`;
-  return {
+  return pageMeta({
     title: item.name,
-    description,
-    alternates: { canonical: `/merch/${item.slug}` },
-    openGraph: {
-      type: "website",
-      siteName: "BLACK THRONE",
-      title,
-      description,
-      url: `/merch/${item.slug}`,
-    },
-    twitter: { card: "summary_large_image", title, description },
-  };
+    description: clip(item.text || `${item.name}: official ${name} merch.`),
+    path: `/merch/${item.slug}`,
+    ownImage: true, // opengraph-image.tsx: the product card
+    keywords: [item.name, `${name} ${item.name}`, `${name} merch`, name],
+  });
 }
 
 /** Variant images aren't needed client-side; keep the purchase panel's props small. */

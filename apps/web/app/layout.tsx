@@ -43,6 +43,10 @@ export const metadata: Metadata = {
     ...site.profile.genres.map((g) => g.toLowerCase()),
     ...getReleases().map((r) => r.title),
   ],
+  category: "music",
+  // Track times, dates and prices are not phone numbers or addresses (iOS auto-links them).
+  formatDetection: { telephone: false, email: false, address: false },
+  appleWebApp: { title: site.name, statusBarStyle: "black-translucent" },
   // Large image previews and full snippets in Google/Discover. Indexing stays the default, so
   // per-page `noindex` (the cart, 404s) is never contradicted.
   robots: {

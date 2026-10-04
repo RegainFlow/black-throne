@@ -14,10 +14,15 @@ import { ATTR_COOKIE, CART_COOKIE, COUNT_COOKIE } from "@/lib/merch/cookies";
 import { cartErrorMessage, toCartErrorCode } from "@/lib/merch/errors";
 import { cartGet, getCatalogue } from "@/lib/merch/fourthwall";
 import { formatMoney } from "@/lib/merch/money";
+import { pageMeta } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Cart",
-  alternates: { canonical: "/merch/cart" },
+  ...pageMeta({
+    title: "Cart",
+    description: "Your Black Throne merch cart. Checkout is by Fourthwall.",
+    path: "/merch/cart",
+    ownImage: true,
+  }),
   robots: { index: false, follow: false },
 };
 

@@ -1,5 +1,4 @@
 import { getSite } from "@black-throne/content";
-import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -18,22 +17,18 @@ import {
 } from "@/lib/merch/catalogue";
 import { merchConfig } from "@/lib/merch/config";
 import { getCatalogue, getCollections } from "@/lib/merch/fourthwall";
+import { pageMeta } from "@/lib/seo";
 
 const description = "Official Black Throne merch. Checkout, payment and shipping by Fourthwall.";
 
-export const metadata: Metadata = {
+// Filtered and searched views (?q=, ?color=…) all canonicalise to the plain listing.
+export const metadata = pageMeta({
   title: "Merch",
   description,
-  alternates: { canonical: "/merch" },
-  openGraph: {
-    type: "website",
-    siteName: "BLACK THRONE",
-    title: "Merch — BLACK THRONE",
-    description,
-    url: "/merch",
-  },
-  twitter: { card: "summary_large_image", title: "Merch — BLACK THRONE", description },
-};
+  path: "/merch",
+  ownImage: true, // opengraph-image.tsx
+  keywords: [`${getSite().name} merch`, getSite().name, "official merch"],
+});
 
 export default async function MerchPage({ searchParams }: PageProps<"/merch">) {
   await connection();

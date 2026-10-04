@@ -32,7 +32,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const release = getRelease(slug);
   if (!release) return {};
-  const { name } = getSite();
+  const { name, profile } = getSite();
   const era = getEra(release.eraId);
   const chapter = `Chapter ${era.numeral}${era.title ? `: ${era.title}` : ""}`;
   const tracks = release.tracks ?? [];
@@ -51,6 +51,13 @@ export async function generateMetadata({
     description,
     path: `/chapters/${slug}`,
     ownImage: true, // opengraph-image.tsx: the cover card
+    keywords: [
+      release.title,
+      `${release.title} ${name}`,
+      name,
+      ...tracks.map((t) => t.title),
+      ...profile.genres.map((g) => g.toLowerCase()),
+    ],
     og:
       release.kind === "album"
         ? { type: "music.album", musicians, releaseDate: release.releaseDate }
