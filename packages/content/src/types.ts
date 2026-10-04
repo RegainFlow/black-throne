@@ -120,6 +120,32 @@ export interface SocialLink {
   placeholder?: boolean;
 }
 
+/**
+ * Facts about the artist for /about, /llms.txt and the MusicGroup JSON-LD. Only ever
+ * artist-supplied: optional fields stay unset (and render nothing) until the artist confirms them.
+ */
+export interface ArtistProfile {
+  /** Other spellings people search for. */
+  alternateNames: string[];
+  genres: string[];
+  /** Artist-approved bio paragraphs. Falls back to `Site.description`. */
+  bio?: string[];
+  /** "City, Region, Country". */
+  origin?: string;
+  /** Year formed, YYYY. */
+  formed?: string;
+  members?: { name: string; role?: string }[];
+  influences?: string[];
+  /** Public addresses only, once the artist has agreed to publish them. */
+  contact?: { press?: string; booking?: string };
+}
+
+/** An official profile that isn't a social button (Apple Music, Wikidata, MusicBrainz, …). */
+export interface ProfileLink {
+  label: string;
+  url: string;
+}
+
 export interface Site {
   name: string;
   tagline: string;
@@ -127,6 +153,9 @@ export interface Site {
   thresholdLine: string;
   spotifyArtist: { uri: string; url: string };
   socials: SocialLink[];
+  profile: ArtistProfile;
+  /** Listed on /about and /llms.txt and in JSON-LD `sameAs`. Not shown as social buttons. */
+  profiles: ProfileLink[];
   /**
    * The Fourthwall merch store at /merch (a secondary, lean page; checkout is Fourthwall's).
    * `enabled: false` hides every merch link and makes /merch a 404.

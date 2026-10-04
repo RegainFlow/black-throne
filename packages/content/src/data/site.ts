@@ -38,5 +38,20 @@ export const site: Site = {
       placeholder: true,
     },
   ],
+  // Artist facts for /about, /llms.txt and JSON-LD. Never guess: leave a field unset until the
+  // artist confirms it (production builds list the missing ones). Never mention anything sealed.
+  profile: {
+    alternateNames: ["BLACK THRONE"],
+    genres: ["Metal"],
+    // bio: ["…"],               artist-approved paragraphs (falls back to `description`)
+    // origin: "City, Region, Country",
+    // formed: "YYYY",
+    // members: [{ name: "…", role: "…" }],
+    // influences: ["…"],
+    // contact: { press: "…", booking: "…" },
+  },
+  // Official profiles beyond the social buttons, added as each one exists: Apple Music,
+  // YouTube Music, Wikidata, MusicBrainz, Last.fm, Genius, Discogs, Bandsintown…
+  profiles: [],
   merch: { enabled: true },
 };

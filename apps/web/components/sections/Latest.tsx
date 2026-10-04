@@ -31,7 +31,7 @@ export function Latest({ release, site }: { release: PublicRelease; site: Site }
               >
                 <CoverPicture
                   cover={cover}
-                  alt={`${release.title} cover art`}
+                  alt={`${release.title} by ${site.name}, cover art`}
                   sizes="(min-width: 768px) 320px, 272px"
                   className="h-auto w-full shadow-[0_40px_120px_-20px_rgb(0_0_0/0.9)]"
                 />

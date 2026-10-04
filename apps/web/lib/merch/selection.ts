@@ -11,11 +11,14 @@ export type Selection = Partial<Record<AxisKey, string>>;
 export type ValueState = "ok" | "soldout" | "missing";
 
 /** Axes that have exactly one value are chosen for the shopper. */
-export function initialSelection(offer: MerchOffer): Selection {
+export function initialSelection(offer: MerchOffer, preset: Selection = {}): Selection {
   const sel: Selection = {};
   for (const axis of offer.axes) {
     const only = axis.values.length === 1 ? axis.values[0] : undefined;
+    const wanted = preset[axis.key];
     if (only) sel[axis.key] = only.value;
+    // A preset (e.g. the colour in the URL) counts only if it is a real value on that axis.
+    else if (wanted && axis.values.some((v) => v.value === wanted)) sel[axis.key] = wanted;
   }
   return sel;
 }

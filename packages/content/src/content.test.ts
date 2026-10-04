@@ -49,4 +49,27 @@ describe("content", () => {
     expect(list.some((p) => p.includes("YouTube"))).toBe(true);
     expect(list.some((p) => p.includes("Instagram"))).toBe(false);
   });
+
+  it("rejects a malformed artist profile", () => {
+    const bad = {
+      ...site,
+      profile: { ...site.profile, formed: "twenty", contact: { press: "not-an-email" } },
+      profiles: [{ label: "Wikidata", url: "nope" }],
+    };
+    expect(() => validateContent({ site: bad, eras, releases, slots })).toThrow(
+      /formed[\s\S]*press[\s\S]*profiles/,
+    );
+  });
+
+  it("reports unset profile facts, and stops once they are set", () => {
+    const missing = (s: typeof site) =>
+      findPlaceholders({ site: s, releases }).find((p) => p.startsWith("profile:"));
+    const bare = { ...site, profile: { alternateNames: [], genres: ["Metal"] } };
+    expect(missing(bare)).toMatch(/origin, year formed, lineup/);
+    const full = {
+      ...bare,
+      profile: { ...bare.profile, origin: "X", formed: "2020", members: [{ name: "Y" }] },
+    };
+    expect(missing(full)).toBeUndefined();
+  });
 });

@@ -30,6 +30,11 @@ describe("variant selection", () => {
     expect(matchVariant(posterOffer, initialSelection(posterOffer))?.id).toMatch(/01$/);
   });
 
+  it("starts on a preset colour only when the product has it", () => {
+    expect(initialSelection(teeOffer, { color: "Bone" })).toEqual({ color: "Bone" });
+    expect(initialSelection(teeOffer, { color: "Purple" })).toEqual({});
+  });
+
   it("marks sizes missing in the chosen colour, and sold-out ones as sold out", () => {
     const sel = { color: "Bone" };
     expect(valueState(teeOffer, sel, "size", "S")).toBe("missing");

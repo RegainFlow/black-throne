@@ -11,9 +11,12 @@ import { VideoCard } from "@/components/media/VideoCard";
 import { Footer } from "@/components/sections/Footer";
 import { CoverPicture } from "@/components/ui/CoverPicture";
 import { GlitchText } from "@/components/ui/GlitchText";
+import { JsonLd } from "@/components/ui/JsonLd";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TransitionLink } from "@/components/ui/TransitionLink";
-import { ldScript, releaseLd } from "@/lib/jsonld";
+import { formatReleaseDate } from "@/lib/about";
+import { breadcrumbLd, releaseLd } from "@/lib/jsonld";
+import { pageMeta } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
 
 // Only public releases exist as pages. Anything else — including anything sealed — is a 404.
@@ -29,18 +32,33 @@ export async function generateMetadata({
   const { slug } = await params;
   const release = getRelease(slug);
   if (!release) return {};
+  const { name } = getSite();
   const era = getEra(release.eraId);
+  const chapter = `Chapter ${era.numeral}${era.title ? `: ${era.title}` : ""}`;
+  const tracks = release.tracks ?? [];
+  const what =
+    release.kind === "album" && tracks.length > 1
+      ? `the ${tracks.length}-track album`
+      : `the ${release.kind}`;
+  const when = release.releaseDate ? formatReleaseDate(release.releaseDate) : undefined;
   const description =
     release.visibility === "released"
-      ? `${release.title} — ${release.kind} by Black Throne. Chapter ${era.numeral}${era.title ? `: ${era.title}` : ""}.`
-      : `${release.title} — the new ${release.kind} from Black Throne. Announced.`;
-  return {
+      ? `${release.title}, ${what} by ${name}${when ? `, released ${when}` : ""}. ${chapter}.${release.spotify ? " Listen on Spotify." : ""}`
+      : `${release.title}, the new ${release.kind} from ${name}${when ? `, out ${when}` : ""}. ${chapter}.`;
+  const musicians = [siteUrl().href];
+  return pageMeta({
     title: release.title,
     description,
-    alternates: { canonical: `/chapters/${slug}` },
-    openGraph: { title: `${release.title} — BLACK THRONE`, description, type: "music.album" },
-    twitter: { title: `${release.title} — BLACK THRONE`, description },
-  };
+    path: `/chapters/${slug}`,
+    og:
+      release.kind === "album"
+        ? { type: "music.album", musicians, releaseDate: release.releaseDate }
+        : {
+            type: "music.song",
+            musicians,
+            duration: tracks[0] ? Math.round(tracks[0].durationMs / 1000) : undefined,
+          },
+  });
 }
 
 export default async function ChapterPage({ params }: PageProps<"/chapters/[slug]">) {
@@ -52,13 +70,16 @@ export default async function ChapterPage({ params }: PageProps<"/chapters/[slug
   const { prev, next } = getAdjacent(slug);
   const { cover, teaser, videos } = release.media;
   const year = release.releaseDate ? parseReleaseDate(release.releaseDate).getFullYear() : null;
+  const origin = siteUrl();
 
   return (
     <main id="main" data-page-grade={release.grade}>
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD from first-party content, `<` escaped
-        dangerouslySetInnerHTML={{ __html: ldScript(releaseLd(release, site, siteUrl())) }}
+      <JsonLd data={releaseLd(release, site, origin)} />
+      <JsonLd
+        data={breadcrumbLd([
+          { name: site.name, url: origin.href },
+          { name: release.title, url: new URL(`/chapters/${release.slug}`, origin).href },
+        ])}
       />
 
       <section className="relative px-gutter pt-[calc(var(--bt-nav-h)+8vh)] pb-[12vh]">
@@ -76,7 +97,7 @@ export default async function ChapterPage({ params }: PageProps<"/chapters/[slug
               >
                 <CoverPicture
                   cover={cover}
-                  alt={`${release.title} cover art`}
+                  alt={`${release.title} by ${site.name}, cover art`}
                   sizes="(min-width: 768px) 40vw, 90vw"
                   priority
                   className="h-auto w-full"

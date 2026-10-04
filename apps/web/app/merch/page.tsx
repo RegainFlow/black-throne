@@ -105,7 +105,7 @@ async function Results({ query }: { query: MerchQuery }) {
         <ul className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
           {page.items.map((item, i) => (
             <li key={item.id} className="min-w-0">
-              <ProductCard item={item} priority={i < 4} />
+              <ProductCard item={item} priority={i < 4} colors={query.colors} />
             </li>
           ))}
         </ul>

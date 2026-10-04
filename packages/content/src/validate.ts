@@ -78,6 +78,25 @@ const slotSchema = z.object({
     .optional(),
 });
 
+const text = z.string().trim().min(1);
+
+const siteSchema = z.object({
+  profile: z.object({
+    alternateNames: z.array(text),
+    genres: z.array(text).min(1),
+    bio: z.array(text).min(1).optional(),
+    origin: text.optional(),
+    formed: z
+      .string()
+      .regex(/^\d{4}$/, "expected a year, YYYY")
+      .optional(),
+    members: z.array(z.object({ name: text, role: text.optional() })).optional(),
+    influences: z.array(text).optional(),
+    contact: z.object({ press: z.email().optional(), booking: z.email().optional() }).optional(),
+  }),
+  profiles: z.array(z.object({ label: text, url: z.url() })),
+});
+
 /** Throws a readable error if the content is inconsistent. Run in tests and by `pnpm media`. */
 export function validateContent(input: {
   site: Site;
@@ -94,6 +113,7 @@ export function validateContent(input: {
     }
   };
 
+  collect("site", siteSchema.safeParse(input.site));
   for (const [i, e] of input.eras.entries()) collect(`eras[${i}]`, eraSchema.safeParse(e));
   for (const [i, r] of input.releases.entries()) {
     collect(`releases[${r.slug ?? i}]`, releaseSchema.safeParse(r));
@@ -120,6 +140,15 @@ export function findPlaceholders(input: { site: Site; releases: Release[] }): st
   const out = input.site.socials
     .filter((s) => s.placeholder)
     .map((s) => `${s.label} URL is a placeholder`);
+  const { profile } = input.site;
+  const missing = [
+    !profile.origin && "origin",
+    !profile.formed && "year formed",
+    !profile.members?.length && "lineup",
+  ].filter(Boolean);
+  if (missing.length) {
+    out.push(`profile: ${missing.join(", ")} not set (left off /about, /llms.txt and JSON-LD)`);
+  }
   for (const r of input.releases) {
     if (r.visibility === "announced" && !r.releaseDate) out.push(`${r.title}: no releaseDate yet`);
     if (r.visibility === "announced" && !r.presaveUrl) out.push(`${r.title}: no presaveUrl yet`);

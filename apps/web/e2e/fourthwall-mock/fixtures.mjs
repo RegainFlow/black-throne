@@ -20,7 +20,7 @@ const uuid = (group) => {
   return `${group}-0000-4000-8000-${String(seq).padStart(12, "0")}`;
 };
 
-function variant({ price, color, size, stock = { type: "UNLIMITED" }, name = "" }) {
+function variant({ price, color, size, stock = { type: "UNLIMITED" }, name = "", images = [] }) {
   return {
     id: uuid("aaaaaaaa"),
     name,
@@ -35,7 +35,7 @@ function variant({ price, color, size, stock = { type: "UNLIMITED" }, name = "" 
     stock,
     weight: { value: 0.3, unit: "kg" },
     dimensions: { length: 30, width: 20, height: 2, unit: "cm" },
-    images: [],
+    images,
   };
 }
 
@@ -53,12 +53,16 @@ function product(fields) {
   };
 }
 
+const BLACK = [img("tee-front"), img("tee-back")];
+const BONE = [img("tee-bone-front")];
+
 export const tee = product({
   name: "Crest Tee",
   slug: "crest-tee",
   description:
     "<p>Heavyweight cotton, <strong>screen printed</strong> by hand.</p><ul><li>Boxy fit</li><li>Cold wash</li></ul><script>window.__pwned = true</script>",
-  images: [img("tee-front"), img("tee-back")],
+  // Like Fourthwall: each colour's variants carry that colour's photos; "tee-detail" is shared.
+  images: [img("tee-front"), img("tee-back"), img("tee-bone-front"), img("tee-detail")],
   createdAt: "2026-02-01T00:00:00.000Z",
   additionalInformation: [
     {
@@ -75,12 +79,24 @@ export const tee = product({
   ],
   sizeGuide: { description: "Measured flat, armpit to armpit.", fitGuideUrls: [] },
   variants: [
-    variant({ price: 30, color: "Black", size: "S" }),
-    variant({ price: 30, color: "Black", size: "M" }),
-    variant({ price: 30, color: "Black", size: "L", stock: { type: "LIMITED", inStock: 3 } }),
-    variant({ price: 34, color: "Black", size: "XL", stock: { type: "LIMITED", inStock: 0 } }),
-    variant({ price: 30, color: "Bone", size: "S" }),
-    variant({ price: 30, color: "Bone", size: "M" }),
+    variant({ price: 30, color: "Black", size: "S", images: BLACK }),
+    variant({ price: 30, color: "Black", size: "M", images: BLACK }),
+    variant({
+      price: 30,
+      color: "Black",
+      size: "L",
+      stock: { type: "LIMITED", inStock: 3 },
+      images: BLACK,
+    }),
+    variant({
+      price: 34,
+      color: "Black",
+      size: "XL",
+      stock: { type: "LIMITED", inStock: 0 },
+      images: BLACK,
+    }),
+    variant({ price: 30, color: "Bone", size: "S", images: BONE }),
+    variant({ price: 30, color: "Bone", size: "M", images: BONE }),
   ],
 });
 

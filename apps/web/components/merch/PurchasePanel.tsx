@@ -36,10 +36,22 @@ export interface PurchaseModel {
   compareAt?: Money;
   priceVaries: boolean;
   available: boolean;
+  /** Colour to start on (from `?color=`, already matched to a real value). Products only. */
+  color?: string;
 }
 
 const IDLE: ActionState = { status: "idle", message: "" };
 const noop = () => () => {};
+
+/**
+ * Puts the chosen colour in the URL without navigating. Gallery reads it from there, and the
+ * link stays shareable. (A bundle has one colour per part, so only products do this.)
+ */
+function showColor(color: string) {
+  const params = new URLSearchParams(window.location.search);
+  params.set("color", color);
+  window.history.replaceState(null, "", `?${params}`);
+}
 
 /**
  * Variant selection + purchase. Native radios in fieldsets (arrow keys move within a group),
@@ -56,7 +68,9 @@ export function PurchasePanel({ model }: { model: PurchaseModel }) {
   );
   const prefixOf = (offer: MerchOffer) => (model.kind === "bundle" ? offer.id : "");
   const [sel, setSel] = useState<Record<string, Selection>>(() =>
-    Object.fromEntries(model.offers.map((o) => [prefixOf(o), initialSelection(o)])),
+    Object.fromEntries(
+      model.offers.map((o) => [prefixOf(o), initialSelection(o, { color: model.color })]),
+    ),
   );
   const [state, addAction, adding] = useActionState(addToCart, IDLE);
   const [buyState, buyAction, buying] = useActionState(buyNow, IDLE);
@@ -171,12 +185,15 @@ export function PurchasePanel({ model }: { model: PurchaseModel }) {
                             value={v.value}
                             checked={picked === v.value}
                             disabled={st === "missing"}
-                            onChange={() =>
+                            onChange={() => {
                               setSel((s) => ({
                                 ...s,
                                 [prefix]: choose(offer, s[prefix] ?? {}, axis.key, v.value),
-                              }))
-                            }
+                              }));
+                              if (model.kind === "product" && axis.key === "color") {
+                                showColor(v.value);
+                              }
+                            }}
                             className="peer sr-only"
                           />
                           <span

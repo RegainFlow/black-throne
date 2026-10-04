@@ -83,6 +83,10 @@ test.describe("merch listing", () => {
 
     await page.goto("/merch?color=Bone");
     await expect.poll(() => cardNames(page)).toEqual(["Crest Tee", "Tee and Poster Pack"]);
+    // The colour filter carries through: the card shows that colour and opens on it.
+    const tee = cards(page).filter({ hasText: "Crest Tee" });
+    await expect(tee).toHaveAttribute("href", "/merch/crest-tee?color=Bone");
+    await expect(tee.locator("img")).toHaveAttribute("src", /tee-bone-front/);
 
     await page.goto("/merch?stock=in");
     await expect
@@ -195,6 +199,51 @@ test.describe("merch product", () => {
     await expect(radio(page, "S")).toBeChecked();
     await add.click();
     await expect(page.locator("[data-cart-count]")).toHaveText("2");
+  });
+
+  test("the gallery shows one large photo and only the chosen colour's thumbnails", async ({
+    page,
+  }) => {
+    await page.goto("/merch/crest-tee");
+    const gallery = page.locator("[data-gallery]");
+    const thumbs = gallery.getByRole("button", { name: /show image/i });
+    const main = gallery.getByRole("img").first();
+    // No colour chosen yet: the first colour's photos (2 own + 1 shared).
+    await expect(thumbs).toHaveCount(3);
+    await expect(main).toHaveAttribute("src", /tee-front/);
+    await thumbs.nth(1).click();
+    await expect(main).toHaveAttribute("src", /tee-back/);
+    await expect(thumbs.nth(1)).toHaveAttribute("aria-current", "true");
+
+    await pick(page, "Bone");
+    await expect(page).toHaveURL(/[?&]color=Bone/);
+    await expect(thumbs).toHaveCount(2);
+    await expect(main).toHaveAttribute("src", /tee-bone-front/); // a new colour starts on photo 1
+    await expect(main).toHaveAttribute("alt", /bone/i);
+  });
+
+  test("?color= preselects the colour and its photos; unknown colours are ignored", async ({
+    page,
+  }) => {
+    await page.goto("/merch/crest-tee?color=bone");
+    await expect(radio(page, "Bone")).toBeChecked();
+    await expect(page.locator("[data-gallery] img").first()).toHaveAttribute(
+      "src",
+      /tee-bone-front/,
+    );
+    await expect(page.locator("[data-purchase-hint]")).toHaveText(/choose size/i);
+
+    await page.goto("/merch/crest-tee?color=purple");
+    await expect(page.locator("[data-purchase-hint]")).toHaveText(/choose color and size/i);
+  });
+
+  test("buttons show the pointer", async ({ page }) => {
+    await page.goto("/merch/crest-tee");
+    await pick(page, "Black");
+    await pick(page, "S");
+    for (const name of [/add to cart/i, /buy now/i]) {
+      await expect(page.getByRole("button", { name })).toHaveCSS("cursor", "pointer");
+    }
   });
 
   test("a sold-out product can't be bought", async ({ page }) => {

@@ -1,10 +1,11 @@
-import { getBrandMedia, getSite } from "@black-throne/content";
+import { getBrandMedia, getReleases, getSite } from "@black-throne/content";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Cinzel, Cormorant_Garamond, IBM_Plex_Mono } from "next/font/google";
 import { thresholdScript } from "@/components/threshold/script";
 import { gradeCss } from "@/lib/grade-css";
+import { SITE_NAME } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
@@ -26,21 +27,27 @@ const plexMono = IBM_Plex_Mono({
 
 const site = getSite();
 
+// Site-wide defaults only. Canonical, og:url and share titles are per page (lib/seo.ts →
+// pageMeta): metadata merges shallowly, so anything set here would leak into every route.
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
-  title: { default: "BLACK THRONE", template: "%s — BLACK THRONE" },
+  title: { default: SITE_NAME, template: `%s — ${SITE_NAME}` },
   description: site.description,
-  applicationName: "Black Throne",
-  keywords: ["Black Throne", "metal", "DYSTOPIA", "House of Ash", "heavy music"],
-  openGraph: {
-    type: "website",
-    siteName: "BLACK THRONE",
-    title: "BLACK THRONE",
-    description: site.tagline,
-    url: "/",
+  applicationName: site.name,
+  authors: [{ name: site.name, url: "/" }],
+  creator: site.name,
+  publisher: site.name,
+  keywords: [
+    site.name,
+    ...site.profile.alternateNames,
+    ...site.profile.genres.map((g) => g.toLowerCase()),
+    ...getReleases().map((r) => r.title),
+  ],
+  // Large image previews and full snippets in Google/Discover. Indexing stays the default, so
+  // per-page `noindex` (the cart, 404s) is never contradicted.
+  robots: {
+    googleBot: { "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   },
-  twitter: { card: "summary_large_image", title: "BLACK THRONE", description: site.tagline },
-  alternates: { canonical: "/" },
 };
 
 export const viewport: Viewport = {

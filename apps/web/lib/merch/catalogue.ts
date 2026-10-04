@@ -101,7 +101,8 @@ export function merchHref(q: Partial<MerchQuery>): string {
   return s ? `/merch?${s}` : "/merch";
 }
 
-const fold = (s: string) => s.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
+/** Case- and accent-insensitive form, for matching search terms and option values. */
+export const fold = (s: string) => s.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
 
 function haystack(item: MerchItem): string {
   const offerNames = item.kind === "bundle" ? item.offers.map((o) => o.name) : [];

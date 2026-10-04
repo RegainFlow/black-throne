@@ -6,58 +6,121 @@ const isoDuration = (ms: number) => {
   return `PT${Math.floor(s / 60)}M${s % 60}S`;
 };
 
-const sameAs = (site: Site) => site.socials.filter((s) => !s.placeholder).map((s) => s.url);
+/** Stable node ids, so every page describes the same artist entity. */
+export const artistId = (origin: URL) => new URL("/#artist", origin).href;
+const websiteId = (origin: URL) => new URL("/#website", origin).href;
+const releaseUrl = (slug: string, origin: URL) => new URL(`/chapters/${slug}`, origin).href;
+const releaseId = (slug: string, origin: URL) => `${releaseUrl(slug, origin)}#release`;
+const releaseType = (r: PublicRelease) =>
+  r.kind === "album" ? "https://schema.org/AlbumRelease" : "https://schema.org/SingleRelease";
+
+/** Every official profile, for `sameAs`. Placeholder socials never count. */
+export function officialProfiles(site: Site): string[] {
+  return [
+    ...site.socials.filter((s) => !s.placeholder).map((s) => s.url),
+    ...site.profiles.map((p) => p.url),
+  ];
+}
 
 export function musicGroup(site: Site, releases: PublicRelease[], origin: URL) {
+  const { profile } = site;
+  const logo = new URL("/icon.png", origin).href;
   return {
     "@context": "https://schema.org",
     "@type": "MusicGroup",
+    "@id": artistId(origin),
     name: site.name,
+    alternateName: profile.alternateNames.length ? profile.alternateNames : undefined,
     url: origin.href,
     description: site.description,
-    genre: ["Metal"],
-    sameAs: sameAs(site),
-    album: releases
-      .filter((r) => r.kind === "album")
-      .map((r) => ({
-        "@type": "MusicAlbum",
-        name: r.title,
-        url: new URL(`/chapters/${r.slug}`, origin).href,
-      })),
+    image: logo,
+    logo,
+    genre: profile.genres,
+    // Artist-supplied facts only: each is left out until it is set in site.ts.
+    foundingDate: profile.formed,
+    foundingLocation: profile.origin ? { "@type": "Place", name: profile.origin } : undefined,
+    member: profile.members?.map((m) =>
+      m.role
+        ? {
+            "@type": "OrganizationRole",
+            roleName: m.role,
+            member: { "@type": "Person", name: m.name },
+          }
+        : { "@type": "Person", name: m.name },
+    ),
+    sameAs: officialProfiles(site),
+    album: releases.map((r) => ({
+      "@type": "MusicAlbum",
+      "@id": releaseId(r.slug, origin),
+      name: r.title,
+      url: releaseUrl(r.slug, origin),
+      albumReleaseType: releaseType(r),
+    })),
   };
 }
 
-export function releaseLd(release: PublicRelease, site: Site, origin: URL) {
-  const url = new URL(`/chapters/${release.slug}`, origin).href;
-  const image = release.media.cover ? new URL(release.media.cover.og, origin).href : undefined;
-  const byArtist = { "@type": "MusicGroup", name: site.name, url: origin.href };
-  if (release.kind === "album") {
-    return {
-      "@context": "https://schema.org",
-      "@type": "MusicAlbum",
-      name: release.title,
-      url,
-      image,
-      byArtist,
-      datePublished: release.releaseDate,
-      numTracks: release.tracks?.length,
-      track: release.tracks?.map((t, i) => ({
-        "@type": "MusicRecording",
-        position: i + 1,
-        name: t.title,
-        duration: isoDuration(t.durationMs),
-        url: `https://open.spotify.com/track/${t.uri.split(":")[2]}`,
-      })),
-    };
-  }
+/** The site itself: gives Google the site name to show, and ties the site to the artist. */
+export function websiteLd(site: Site, origin: URL) {
   return {
     "@context": "https://schema.org",
-    "@type": "MusicRecording",
+    "@type": "WebSite",
+    "@id": websiteId(origin),
+    name: site.name,
+    alternateName: site.profile.alternateNames.length ? site.profile.alternateNames : undefined,
+    url: origin.href,
+    inLanguage: "en",
+    publisher: { "@id": artistId(origin) },
+  };
+}
+
+/** Singles are albums too (`SingleRelease`), the way Spotify and MusicBrainz model them. */
+export function releaseLd(release: PublicRelease, site: Site, origin: URL) {
+  const url = releaseUrl(release.slug, origin);
+  return {
+    "@context": "https://schema.org",
+    "@type": "MusicAlbum",
+    "@id": releaseId(release.slug, origin),
     name: release.title,
     url,
-    image,
-    byArtist,
+    image: release.media.cover ? new URL(release.media.cover.og, origin).href : undefined,
+    albumReleaseType: releaseType(release),
+    byArtist: { "@type": "MusicGroup", "@id": artistId(origin), name: site.name, url: origin.href },
+    genre: site.profile.genres,
     datePublished: release.releaseDate,
+    sameAs: release.spotify ? [release.spotify.url] : undefined,
+    numTracks: release.tracks?.length,
+    track: release.tracks?.map((t, i) => ({
+      "@type": "MusicRecording",
+      position: i + 1,
+      name: t.title,
+      duration: isoDuration(t.durationMs),
+      url: `https://open.spotify.com/track/${t.uri.split(":")[2]}`,
+    })),
+  };
+}
+
+export function breadcrumbLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+export function faqLd(faq: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map(({ q, a }) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: { "@type": "Answer", text: a },
+    })),
   };
 }
 

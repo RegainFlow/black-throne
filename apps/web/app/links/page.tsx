@@ -1,5 +1,4 @@
 import { getLatest, getSite } from "@black-throne/content";
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ReleaseCtas } from "@/components/media/ReleaseCtas";
 import { ReleaseStatus } from "@/components/media/ReleaseStatus";
@@ -7,12 +6,13 @@ import { CoverPicture } from "@/components/ui/CoverPicture";
 import { Monogram } from "@/components/ui/Monogram";
 import { OutboundLink } from "@/components/ui/OutboundLink";
 import { StaticBackdrop } from "@/components/world/StaticBackdrop";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMeta({
   title: "Links",
-  description: "Black Throne — every platform, one place.",
-  alternates: { canonical: "/links" },
-};
+  description: `${getSite().name}: the latest release and every official platform, in one place.`,
+  path: "/links",
+});
 
 /**
  * Link-in-bio for Instagram/TikTok. Mobile-first, no WebGL, no threshold — it has to be instant.
@@ -48,7 +48,7 @@ export default function LinksPage() {
             <Link href={`/chapters/${latest.slug}`} className="block w-40">
               <CoverPicture
                 cover={cover}
-                alt={`${latest.title} cover art`}
+                alt={`${latest.title} by ${site.name}, cover art`}
                 sizes="160px"
                 priority
                 className="h-auto w-full"

@@ -10,6 +10,7 @@ import { type PurchaseModel, PurchasePanel } from "@/components/merch/PurchasePa
 import { ldScript, productLd } from "@/lib/jsonld";
 import { isProductSlug } from "@/lib/merch/catalogue";
 import { getProduct } from "@/lib/merch/fourthwall";
+import { findSet, imageSets } from "@/lib/merch/gallery";
 import { RichText } from "@/lib/merch/rich-text";
 import type { MerchItem, MerchOffer } from "@/lib/merch/types";
 import { siteUrl } from "@/lib/site-url";
@@ -43,7 +44,7 @@ const lean = (offer: MerchOffer): MerchOffer => ({
   variants: offer.variants.map((v) => ({ ...v, images: [] })),
 });
 
-function purchaseModel(item: MerchItem): PurchaseModel {
+function purchaseModel(item: MerchItem, color?: string): PurchaseModel {
   return {
     slug: item.slug,
     kind: item.kind,
@@ -53,10 +54,11 @@ function purchaseModel(item: MerchItem): PurchaseModel {
     compareAt: item.compareAt,
     priceVaries: item.priceVaries,
     available: item.available,
+    color,
   };
 }
 
-export default async function ProductPage({ params }: PageProps<"/merch/[slug]">) {
+export default async function ProductPage({ params, searchParams }: PageProps<"/merch/[slug]">) {
   await connection();
   const { slug } = await params;
   if (!isProductSlug(slug)) notFound();
@@ -72,6 +74,11 @@ export default async function ProductPage({ params }: PageProps<"/merch/[slug]">
   const item = res.value;
   if (!item) notFound();
   const site = getSite();
+  // `?color=` (from a colour pick or a filtered listing) picks the photos and the preselected
+  // colour together; anything that isn't one of this product's colours is ignored.
+  const sets = imageSets(item);
+  const requested = (await searchParams).color;
+  const color = findSet(sets, Array.isArray(requested) ? requested[0] : requested)?.color;
 
   return (
     <>
@@ -86,7 +93,7 @@ export default async function ProductPage({ params }: PageProps<"/merch/[slug]">
       </nav>
       <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-16">
         <div className="min-w-0">
-          <Gallery images={item.images} name={item.name} />
+          <Gallery sets={sets} name={item.name} />
         </div>
         <div className="flex min-w-0 flex-col gap-8 md:sticky md:top-8 md:self-start">
           <div className="flex flex-col gap-3">
@@ -95,7 +102,7 @@ export default async function ProductPage({ params }: PageProps<"/merch/[slug]">
               {item.name}
             </h1>
           </div>
-          <PurchasePanel model={purchaseModel(item)} />
+          <PurchasePanel model={purchaseModel(item, color)} />
           {item.kind === "bundle" && (
             <div className="flex flex-col gap-2 border-t border-bone/10 pt-6">
               <p className="mono-label">includes</p>
