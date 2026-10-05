@@ -23,7 +23,12 @@ export function Latest({ release, site }: { release: PublicRelease; site: Site }
           {cover && (
             <BurnReveal
               grade={release.grade}
-              className="mx-auto w-full max-w-[15rem] sm:max-w-[17rem] md:max-w-[20rem]"
+              className={`mx-auto w-full ${
+                // Portrait posters stay poster-sized; square album art can fill the column.
+                cover.height > cover.width
+                  ? "max-w-[15rem] sm:max-w-[17rem] md:max-w-[20rem]"
+                  : "max-w-sm md:max-w-none"
+              }`}
             >
               <TransitionLink
                 href={`/chapters/${release.slug}`}

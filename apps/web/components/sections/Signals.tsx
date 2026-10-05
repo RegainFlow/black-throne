@@ -8,7 +8,7 @@ export function Signals({ site }: { site: Site }) {
     <section id="signals" aria-labelledby="signals-title" className="relative py-[14vh]">
       <div className="mx-auto max-w-7xl px-gutter">
         <SectionHeading
-          index="04"
+          index="03"
           id="signals-title"
           title="Signals"
           kicker={<span>follow the throne</span>}

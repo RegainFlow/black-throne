@@ -31,7 +31,7 @@ export function ReleaseCard({ release, sizes }: { release: PublicRelease; sizes:
             />
           </BurnReveal>
         ) : (
-          <div className="aspect-[9/16] bg-ash" />
+          <div className="aspect-square bg-ash" />
         )}
         <span
           aria-hidden="true"

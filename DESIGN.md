@@ -87,7 +87,7 @@ Utilities in `globals.css`: `type-wordmark`, `display-title`, `mono-label`, `hai
 
 - 12-column grid inside `max-w-7xl`. Gutter `clamp(1rem, 4vw, 3.5rem)`.
 - **Brutal margins and hairline rules** (`border-bone/10`) instead of boxes and shadows.
-- **9:16 poster panels** are the primary image shape. The artwork is portrait, and so are Shorts, Reels and TikTok.
+- **Square cover art** is the image shape for music: singles, albums and their sealed slots. **9:16 panels** are kept for video (Shorts, Reels, TikTok). A portrait poster still renders at poster width wherever a cover appears.
 - Generous vertical rhythm: sections are `14–18vh` apart. Darkness *is* the layout.
 - Must work at **375px with zero horizontal scroll** (an e2e test enforces it).
 

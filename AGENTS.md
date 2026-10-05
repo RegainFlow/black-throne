@@ -73,7 +73,7 @@ apps/web/
   app/                      also: OG images · sitemap · robots · manifest
   components/world/         persistent layer: WorldCanvas, GradeController, Hud, Cursor, SmoothScroll, TransitionOverlay
   components/threshold/     entry ritual + its inline pre-paint script
-  components/sections/      home sections (Hero, Latest, Chapters, Listen, Visions, Signals, Footer)
+  components/sections/      home sections (Hero, Latest, Chapters, Listen, Signals, Footer)
   components/chapters/      BurnReveal, ReleaseCard, SealedSlot
   components/media/         SpotifyEmbed/Player, TeaserPlayer, VideoCard, ReleaseStatus/Ctas
   components/ui/            primitives (GlitchText, SectionHeading, Cta, TransitionLink, Monogram, …)
@@ -95,7 +95,7 @@ All content is typed data in `packages/content/src/data/`. It is validated on im
 - **Artist facts:** `site.ts` → `profile` (genres, alternate names, and optional bio, origin, year formed, lineup, influences, contact) and `profiles` (official profiles that aren't social buttons: Apple Music, Wikidata, MusicBrainz…). They feed `/about`, `/llms.txt` and the MusicGroup JSON-LD (`sameAs`). **Only artist-confirmed facts.** An unset field renders nothing, and production builds list the missing ones.
 - **Eras (chapters):** `eras.ts`. `title: null` renders a redaction bar.
 - **Releases:** `releases.ts`. Only announced or released items. Fields: dates (`YYYY-MM-DD` = local midnight), `spotify`, `presaveUrl`, `tracks`, `teaser`, `videos`, `grade`, `position`.
-- **Sealed slots:** `slots.ts`. Cryptic placeholders. Slots with `kind: "transmission"` are upcoming videos, shown first in Visions.
+- **Sealed slots:** `slots.ts`. Cryptic placeholders. Single and album slots render as square tiles in their chapter. Slots with `kind: "transmission"` (upcoming videos, 9:16) are never put in a chapter, and the home page currently has no section that shows them.
 - **Veiled slots (an artist-approved tease):** add `veil: {}` (or `veil: { at, keep }` for a video frame) to a slot, and put the source in gitignored `assets/sealed/<slot-id>.*`. `pnpm media` keeps only the top `keep` of the frame (dropping title bands and captions), shrinks it to ~32px and blurs it into `public/media/sealed/<slot-id>.webp`. **Always look at the output.** No text may be legible, and the filename is the neutral slot id. On reveal day, delete the slot and its `assets/sealed/` source.
 
 ### Merch (Fourthwall)
@@ -167,7 +167,7 @@ Everything is generated from the content package, so a reveal updates it all at 
 - Don't put `em` letter-spacing on a parent of differently sized text. Put the tracking on the sized element.
 - Component CSS goes in `@layer components`, so Tailwind utilities (`hidden`, `md:*`) can override it.
 - Pages that need the world go under `app/(world)/`. Lean pages outside it use `StaticBackdrop` and plain `next/link`. `TransitionLink` falls back to normal navigation when no overlay is mounted.
-- **Every page sets its metadata with `pageMeta` (`lib/seo.ts`).** Next merges metadata shallowly, so a page that skips it inherits another route's canonical and og:url, and a page that sets `openGraph` by hand loses the share image. `pageMeta` adds the site card. A segment with its own `opengraph-image` file passes `ownImage` (config images beat the file). The e2e "share card" test checks every page.
+- **Every page sets its metadata with `pageMeta` (`lib/seo.ts`).** Next merges metadata shallowly, so a page that skips it inherits another route's canonical and og:url, and a page that sets `openGraph` by hand loses the share image. `pageMeta` adds the site card. A segment with its own `opengraph-image` file (chapters, merch) passes `ownImage`, because config images beat the file. Pages with their own subject (chapters, products) also pass `keywords`. The e2e "share card" test checks every page.
 - Env vars a build reads must be declared in `turbo.json` → `tasks.build.env`. Turbo 2 runs in strict env mode, and an undeclared var is silently `undefined`: `VERCEL` gates analytics, and `VERCEL_PROJECT_PRODUCTION_URL` drives canonical/OG/sitemap URLs.
 - Follow Biome. `biome-ignore` comments need a reason.
 

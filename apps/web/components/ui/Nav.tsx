@@ -10,7 +10,6 @@ import { TransitionLink } from "./TransitionLink";
 const LINKS = [
   { id: "chapters", label: "chapters" },
   { id: "listen", label: "listen" },
-  { id: "visions", label: "visions" },
   { id: "signals", label: "signals" },
 ];
 

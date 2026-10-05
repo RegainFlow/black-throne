@@ -18,17 +18,17 @@
     },
     "house-of-ash": {
       "cover": {
-        "width": 941,
-        "height": 1672,
-        "avif": "/media/house-of-ash/cover-360.avif 360w, /media/house-of-ash/cover-640.avif 640w, /media/house-of-ash/cover-941.avif 941w",
-        "webp": "/media/house-of-ash/cover-360.webp 360w, /media/house-of-ash/cover-640.webp 640w, /media/house-of-ash/cover-941.webp 941w",
-        "src": "/media/house-of-ash/cover-941.webp",
+        "width": 1254,
+        "height": 1254,
+        "avif": "/media/house-of-ash/cover-360.avif 360w, /media/house-of-ash/cover-640.avif 640w, /media/house-of-ash/cover-1254.avif 1254w",
+        "webp": "/media/house-of-ash/cover-360.webp 360w, /media/house-of-ash/cover-640.webp 640w, /media/house-of-ash/cover-1254.webp 1254w",
+        "src": "/media/house-of-ash/cover-1254.webp",
         "og": "/media/house-of-ash/og.jpg",
-        "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAACQAwCdASoMABUAPu1iqU2ppaOiMAgBMB2JZwDKABrgUMojtcaAAP7vYzCaZUVMi6kCx7fra0Qt43Yy8IPnOLus2UhwMTUkbwiptE1AhAgAAA==",
+        "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAACwAQCdASoMAAwAA4BaJZwAAsenXs1AAP74kSzWY96Ff1uMZjLwKaOyeY9Nfylkh7D6RgZXfKMBGcYzYxQIAA==",
         "palette": {
-          "dominant": "#181411",
-          "accent": "#857063",
-          "dark": "#030202"
+          "dominant": "#171513",
+          "accent": "#a29787",
+          "dark": "#010101"
         }
       },
       "teaser": {
@@ -212,10 +212,10 @@
       "width": 360,
       "height": 421
     },
-    "visions-1": {
-      "src": "/media/sealed/visions-1.webp",
+    "ii-3": {
+      "src": "/media/sealed/ii-3.webp",
       "width": 360,
-      "height": 384
+      "height": 281
     }
   }
 }

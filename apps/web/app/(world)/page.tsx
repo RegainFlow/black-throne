@@ -1,11 +1,10 @@
-import { getChapters, getLatest, getReleases, getSite, getSlots } from "@black-throne/content";
+import { getChapters, getLatest, getReleases, getSite } from "@black-throne/content";
 import { Chapters } from "@/components/sections/Chapters";
 import { Footer } from "@/components/sections/Footer";
 import { Hero } from "@/components/sections/Hero";
 import { Latest } from "@/components/sections/Latest";
 import { Listen } from "@/components/sections/Listen";
 import { Signals } from "@/components/sections/Signals";
-import { Visions } from "@/components/sections/Visions";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { musicGroup, websiteLd } from "@/lib/jsonld";
 import { pageMeta, SITE_NAME } from "@/lib/seo";
@@ -33,7 +32,6 @@ export default function Home() {
       <Latest release={latest} site={site} />
       <Chapters chapters={getChapters()} />
       <Listen releases={releases} site={site} />
-      <Visions releases={releases} transmissions={getSlots("transmission")} />
       <Signals site={site} />
       <Footer site={site} releases={releases} />
     </main>
