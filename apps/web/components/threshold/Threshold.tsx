@@ -19,6 +19,7 @@ export function Threshold({ line, hasTeaser }: { line: string; hasTeaser: boolea
   const root = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLParagraphElement>(null);
   const done = useRef(false);
+  const intro = useRef<gsap.core.Timeline | null>(null);
   const enterRef = useRef<(withSound: boolean) => void>(() => {});
 
   useEffect(() => {
@@ -29,40 +30,44 @@ export function Threshold({ line, hasTeaser }: { line: string; hasTeaser: boolea
     stopScroll(true);
 
     const chars = lineRef.current ? [...lineRef.current.querySelectorAll("[data-char]")] : [];
-    const tl = gsap.timeline({ delay: 0.4 });
+    const tl = gsap.timeline();
+    intro.current = tl;
+    // The choice is offered at once; the ritual plays behind it and never makes anyone wait.
     tl.fromTo(
-      "[data-th-wordmark]",
-      // transform + filter only: letter-spacing tweens force a layout every frame
-      { autoAlpha: 0, scale: 1.08, filter: "blur(8px)" },
+      "[data-th-actions] > *",
+      { autoAlpha: 0, y: 8 },
       {
         autoAlpha: 1,
-        scale: 1,
-        filter: "blur(0px)",
-        duration: 2.4,
+        y: 0,
+        stagger: 0.08,
+        duration: 0.5,
         ease: "power3.out",
+        // Not onStart: at t=0 the buttons are still visibility:hidden and can't take focus.
+        onComplete: () =>
+          el.querySelector<HTMLButtonElement>("[data-th-actions] button")?.focus(),
       },
+      0,
     )
+      .fromTo(
+        "[data-th-wordmark]",
+        // transform + filter only: letter-spacing tweens force a layout every frame
+        { autoAlpha: 0, scale: 1.08, filter: "blur(8px)" },
+        {
+          autoAlpha: 1,
+          scale: 1,
+          filter: "blur(0px)",
+          duration: 2.4,
+          ease: "power3.out",
+        },
+        0.4,
+      )
       .fromTo(
         "[data-th-sigil]",
         { autoAlpha: 0, scale: 0.92 },
         { autoAlpha: 1, scale: 1, duration: 2, ease: "power2.out" },
         "-=1.6",
       )
-      .fromTo(chars, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, stagger: 0.045 }, "-=0.6")
-      .fromTo(
-        "[data-th-actions] > *",
-        { autoAlpha: 0, y: 12 },
-        {
-          autoAlpha: 1,
-          y: 0,
-          stagger: 0.15,
-          duration: 1,
-          ease: "power3.out",
-          onComplete: () =>
-            el.querySelector<HTMLButtonElement>("[data-th-actions] button")?.focus(),
-        },
-        "+=0.2",
-      );
+      .fromTo(chars, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, stagger: 0.045 }, "-=0.6");
 
     const breath = gsap.to("[data-th-sigil-glow]", {
       opacity: 0.9,
@@ -96,6 +101,8 @@ export function Threshold({ line, hasTeaser }: { line: string; hasTeaser: boolea
     // Must run synchronously inside the click: creates/resumes the AudioContext.
     if (withSound) void audio.enable(true);
     trackEvent("enter", { sound: withSound });
+    // Entering mid-ritual: stop the intro so it can't fight the exit tweens.
+    intro.current?.kill();
     const s = world.getState();
     s.burst();
     s.setIntro("entering");

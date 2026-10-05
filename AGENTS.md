@@ -143,6 +143,7 @@ Everything is generated from the content package, so a reveal updates it all at 
 - **Videos** → original MP4 (already faststart), a poster, and a 6s muted preview loop.
 - **Brand** → a tintable mask (`public/brand/monogram.png`, with its size in the manifest) + `app/icon.png` / `apple-icon.png`. Source precedence: `assets/brand/monogram.svg` (vector), then `assets/brand/logo.*` (the official logo; crop and levels in `LOGO` in `packages/media/src/run.ts`), then the poster crop fallback.
 - Outputs are committed, so Vercel never needs ffmpeg or the masters.
+- Every output filename carries a content hash (`cover-640.<hash>.webp`). `/media` is cached for a week, so changed artwork must get a new URL. Only use the URLs in the manifest; never hard-code a media path.
 
 ## Guardrails
 

@@ -123,7 +123,7 @@ The crown, throne and halo motifs are **subtle**: the faint halo ring in the sha
 
 | Effect | Where | Trigger | Key params | Reduced motion / fallback |
 |---|---|---|---|---|
-| **Threshold ritual** | `components/threshold` | first visit per session (inline head script sets `html[data-threshold]`) | type-on line, breathing sigil, ash burst on exit | never shown; no-JS visitors and crawlers skip it; `/links` and `/merch` skip it |
+| **Threshold ritual** | `components/threshold` | first visit per session (inline head script sets `html[data-threshold]`) | the enter choices show at once; type-on line and breathing sigil play behind them; ash burst on exit | never shown; no-JS visitors and crawlers skip it; `/links` and `/merch` skip it |
 | **Ash world** | `components/world/WorldCanvas` | always | DPR × tier, 30–60fps, particles 360–1400 | single still frame; CSS fallback if no WebGL |
 | **Audio reactivity** | `lib/audio-engine` → store → shader | teaser playing | low → turbulence + wordmark tremor; mid → shaft; high → embers; kick → ring + glitch | bands stay 0 |
 | **World re-grading** | `GradeController` | `[data-grade-section]` crosses viewport centre | `@property` colour transitions 1.8s; uniform lerp | instant swap |

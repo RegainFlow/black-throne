@@ -4,10 +4,10 @@
       "cover": {
         "width": 640,
         "height": 640,
-        "avif": "/media/dystopia/cover-360.avif 360w, /media/dystopia/cover-640.avif 640w",
-        "webp": "/media/dystopia/cover-360.webp 360w, /media/dystopia/cover-640.webp 640w",
-        "src": "/media/dystopia/cover-640.webp",
-        "og": "/media/dystopia/og.jpg",
+        "avif": "/media/dystopia/cover-360.239c597291.avif 360w, /media/dystopia/cover-640.8e2b33a1cd.avif 640w",
+        "webp": "/media/dystopia/cover-360.e609bc29cd.webp 360w, /media/dystopia/cover-640.3e93ca8745.webp 640w",
+        "src": "/media/dystopia/cover-640.3e93ca8745.webp",
+        "og": "/media/dystopia/og.fb1538cf39.jpg",
         "blurDataURL": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAACwAQCdASoMAAwAA4BaJaQAAsaVFRBgAP722woEjHQ0PI+sbiLrtOtOlCFy2KqXjS12ykzbMJZ/w4AA",
         "palette": {
           "dominant": "#201d1c",
@@ -20,10 +20,10 @@
       "cover": {
         "width": 1254,
         "height": 1254,
-        "avif": "/media/house-of-ash/cover-360.avif 360w, /media/house-of-ash/cover-640.avif 640w, /media/house-of-ash/cover-1254.avif 1254w",
-        "webp": "/media/house-of-ash/cover-360.webp 360w, /media/house-of-ash/cover-640.webp 640w, /media/house-of-ash/cover-1254.webp 1254w",
-        "src": "/media/house-of-ash/cover-1254.webp",
-        "og": "/media/house-of-ash/og.jpg",
+        "avif": "/media/house-of-ash/cover-360.1aab4db2ac.avif 360w, /media/house-of-ash/cover-640.0e9178c00d.avif 640w, /media/house-of-ash/cover-1254.d2e1ad40c6.avif 1254w",
+        "webp": "/media/house-of-ash/cover-360.bb8603bd8d.webp 360w, /media/house-of-ash/cover-640.7e4d110f8a.webp 640w, /media/house-of-ash/cover-1254.8089b0f118.webp 1254w",
+        "src": "/media/house-of-ash/cover-1254.8089b0f118.webp",
+        "og": "/media/house-of-ash/og.5189989fa9.jpg",
         "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAACwAQCdASoMAAwAA4BaJZwAAsenXs1AAP74kSzWY96Ff1uMZjLwKaOyeY9Nfylkh7D6RgZXfKMBGcYzYxQIAA==",
         "palette": {
           "dominant": "#171513",
@@ -32,7 +32,7 @@
         }
       },
       "teaser": {
-        "src": "/media/house-of-ash/teaser.m4a",
+        "src": "/media/house-of-ash/teaser.37e11a27b4.m4a",
         "start": 173,
         "end": 203,
         "duration": 30,
@@ -208,12 +208,7 @@
   },
   "veils": {
     "ii-2": {
-      "src": "/media/sealed/ii-2.webp",
-      "width": 360,
-      "height": 421
-    },
-    "ii-3": {
-      "src": "/media/sealed/ii-3.webp",
+      "src": "/media/sealed/ii-2.9d0bda013d.webp",
       "width": 360,
       "height": 281
     }

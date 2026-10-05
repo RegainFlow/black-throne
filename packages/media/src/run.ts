@@ -5,8 +5,9 @@
  * without a matching release is deleted, so unannounced material can never ship by accident.
  */
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -64,6 +65,22 @@ async function ffmpeg(args: string[]): Promise<string> {
     if (e.stderr) return e.stderr;
     throw error;
   }
+}
+
+/**
+ * Renames a written output to `<name>.<content hash>.<ext>` and returns the new name. /media is
+ * cached for a week (next.config.ts), so changed artwork must get a new URL or returning
+ * visitors keep seeing the old file.
+ */
+async function fingerprint(dir: string, name: string): Promise<string> {
+  const hash = createHash("sha256")
+    .update(await readFile(join(dir, name)))
+    .digest("hex")
+    .slice(0, 10);
+  const dot = name.lastIndexOf(".");
+  const hashed = `${name.slice(0, dot)}.${hash}${name.slice(dot)}`;
+  await rename(join(dir, name), join(dir, hashed));
+  return hashed;
 }
 
 function findFile(dir: string, base: string, exts: string[]): string | undefined {
@@ -131,6 +148,7 @@ async function processCover(release: Release, outDir: string): Promise<CoverMedi
 
   const avif: string[] = [];
   const webp: string[] = [];
+  let largest = "";
   for (const w of widths) {
     await sharp(src)
       .resize({ width: w })
@@ -140,13 +158,15 @@ async function processCover(release: Release, outDir: string): Promise<CoverMedi
       .resize({ width: w })
       .webp({ quality: 80 })
       .toFile(join(outDir, `cover-${w}.webp`));
-    avif.push(`${url(`cover-${w}.avif`)} ${w}w`);
-    webp.push(`${url(`cover-${w}.webp`)} ${w}w`);
+    avif.push(`${url(await fingerprint(outDir, `cover-${w}.avif`))} ${w}w`);
+    largest = await fingerprint(outDir, `cover-${w}.webp`);
+    webp.push(`${url(largest)} ${w}w`);
   }
   await sharp(src)
     .resize({ height: 1260, withoutEnlargement: true })
     .jpeg({ quality: 84, mozjpeg: true })
     .toFile(join(outDir, "og.jpg"));
+  const og = await fingerprint(outDir, "og.jpg");
   const blur = await sharp(src).resize({ width: 12 }).webp({ quality: 40 }).toBuffer();
   const pal = await palette(src);
   log(`cover ${width}×${height} → ${widths.join("/")}w · palette ${JSON.stringify(pal)}`);
@@ -156,8 +176,8 @@ async function processCover(release: Release, outDir: string): Promise<CoverMedi
     height,
     avif: avif.join(", "),
     webp: webp.join(", "),
-    src: url(`cover-${widths.at(-1)}.webp`),
-    og: url("og.jpg"),
+    src: url(largest),
+    og: url(og),
     blurDataURL: `data:image/webp;base64,${blur.toString("base64")}`,
     palette: pal,
   };
@@ -197,12 +217,13 @@ async function processTeaser(release: Release, outDir: string): Promise<TeaserMe
     "+faststart",
     join(outDir, "teaser.m4a"),
   ]);
+  const file = await fingerprint(outDir, "teaser.m4a");
   log(
     `teaser ${fmtTime(window.start)} → ${fmtTime(window.end)} of ${fmtTime(info.duration)} ` +
       `(${release.teaser.start === "auto" ? "auto-picked loudest window" : "manual"}) — get the artist's OK before shipping`,
   );
   return {
-    src: `/media/${release.slug}/teaser.m4a`,
+    src: `/media/${release.slug}/${file}`,
     start: Math.round(window.start * 10) / 10,
     end: Math.round(window.end * 10) / 10,
     duration,
@@ -270,9 +291,9 @@ async function processVideos(release: Release, outDir: string): Promise<VideoMed
         "+faststart",
         join(outDir, `${v.id}-preview.mp4`),
       ]);
-      base.src = `/media/${release.slug}/${v.id}.mp4`;
-      base.poster = `/media/${release.slug}/${v.id}-poster.jpg`;
-      base.preview = `/media/${release.slug}/${v.id}-preview.mp4`;
+      base.src = `/media/${release.slug}/${await fingerprint(outDir, `${v.id}.mp4`)}`;
+      base.poster = `/media/${release.slug}/${await fingerprint(outDir, `${v.id}-poster.jpg`)}`;
+      base.preview = `/media/${release.slug}/${await fingerprint(outDir, `${v.id}-preview.mp4`)}`;
       log(`video ${v.id} ${base.width}×${base.height}`);
     }
     out.push(base);
@@ -433,7 +454,8 @@ async function processVeils(): Promise<Record<string, VeilMedia>> {
       .modulate({ brightness: 0.8, saturation: 0.85 })
       .webp({ quality: 60 })
       .toFile(join(outDir, `${slot.id}.webp`));
-    out[slot.id] = { src: `/media/sealed/${slot.id}.webp`, width, height };
+    const file = await fingerprint(outDir, `${slot.id}.webp`);
+    out[slot.id] = { src: `/media/sealed/${file}`, width, height };
     log(
       `veil ${slot.id}: ${image ? "image" : `video frame @${slot.veil?.at ?? 1}s`} → ${width}×${height} (blurred)`,
     );
